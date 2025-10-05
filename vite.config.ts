@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+// 导入 path 模块来解析路径，增强兼容性
+import { resolve } from 'path'; 
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,7 +18,9 @@ export default defineConfig({
     
     // 自定义 Rollup 配置，指定入口文件
     rollupOptions: {
-        input: 'index.html', // 确保主入口是 index.html
+        input: {
+          popup: resolve(__dirname, 'index.html'), 
+        },
         output: {
             // 确保生成的文件名是固定的，而不是哈希化（可选，但更清晰）
             entryFileNames: `[name].js`,

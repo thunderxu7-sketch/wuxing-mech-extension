@@ -1,13 +1,20 @@
 // src/api/chromeStorage.ts
-import { UserSignature, FortuneResult } from '../utils/algorithm'; // 稍后定义这些类型
+import type { UserSignature, FortuneResult } from '../utils/algorithm';
 
 const USER_SIGNATURE_KEY = 'user_signature';
 const DAILY_CACHE_KEY = 'daily_fortune_cache';
+
+// 检查是否在 Chrome 扩展环境中的辅助函数
+const isExtensionEnv = typeof chrome !== 'undefined' && chrome.storage;
 
 /**
  * 获取存储的用户五行数字签名。
  */
 export async function getStoredSignature(): Promise<UserSignature | null> {
+    if (!isExtensionEnv) {
+        console.warn("[Storage] Not in extension environment. Returning null signature.");
+        return null; // 在本地预览时返回 null，模拟未设置签名
+    }
     const data = await chrome.storage.local.get(USER_SIGNATURE_KEY);
     return data[USER_SIGNATURE_KEY] || null;
 }
@@ -16,6 +23,10 @@ export async function getStoredSignature(): Promise<UserSignature | null> {
  * 设置用户的五行数字签名。
  */
 export async function setStoredSignature(signature: UserSignature): Promise<void> {
+    if (!isExtensionEnv) {
+        console.warn("[Storage] Not in extension environment. Returning null signature.");
+        return null; // 在本地预览时返回 null，模拟未设置签名
+    }
     await chrome.storage.local.set({ [USER_SIGNATURE_KEY]: signature });
 }
 
@@ -24,6 +35,10 @@ export async function setStoredSignature(signature: UserSignature): Promise<void
  * !! 新增逻辑：会检查缓存是否为当天，如果不是则返回 null。
  */
 export async function getDailyCache(): Promise<{ date: string; data: FortuneResult } | null> {
+    if (!isExtensionEnv) {
+        console.warn("[Storage] Not in extension environment. Returning null signature.");
+        return null; // 在本地预览时返回 null，模拟未设置签名
+    }
     const result = await chrome.storage.local.get(DAILY_CACHE_KEY);
     const cache = result[DAILY_CACHE_KEY];
 
@@ -44,6 +59,10 @@ export async function getDailyCache(): Promise<{ date: string; data: FortuneResu
  * 设置当日运势缓存。
  */
 export async function setDailyCache(data: FortuneResult): Promise<void> {
+    if (!isExtensionEnv) {
+        console.warn("[Storage] Not in extension environment. Returning null signature.");
+        return null; // 在本地预览时返回 null，模拟未设置签名
+    }
     const cache = {
         date: new Date().toDateString(),
         data: data,

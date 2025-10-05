@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "五行机造 (WuXing Mech)",
+  "name": "安平五行阁 (WuXing Calibrate)",
   "version": "1.0.0",
-  "description": "基于五行数字签名的每日运势校准与 NFT 能量锚点推荐。",
+  "description": "算法驱动的每日能量校准。",
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
@@ -11,7 +11,7 @@
   "action": {
     "default_popup": "index.html",
     "default_icon": "icon48.png",
-    "default_title": "五行机造"
+    "default_title": "安平五行阁"
   },
   "permissions": [
     "storage" 

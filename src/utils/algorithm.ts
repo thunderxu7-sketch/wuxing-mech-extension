@@ -14,6 +14,7 @@ export interface FiveElementVector {
     fire: number;
     earth: number;
 }
+export type UserSignature = FiveElementVector;
 
 /**
  * @description 运势计算结果的结构定义
