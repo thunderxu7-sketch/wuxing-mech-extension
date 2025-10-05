@@ -1,0 +1,194 @@
+// src/ui/index.scss
+@use "sass:color"; 
+// ----------------------------------------------------
+// SCSS 变量
+// ----------------------------------------------------
+$primary-color: #007bff; // 主色调：蓝色
+$secondary-color: #6c757d; // 次要文本色
+$background-light: #f8f9fa; // 浅背景
+$card-light: #ffffff; // 卡片背景
+$border-color: #e9ecef; // 分割线/边框颜色
+
+$color-wood: #28a745;
+$color-fire: #dc3545;
+$color-earth: #ffc107;
+$color-gold: #6c757d;
+$color-water: #007bff;
+
+// ----------------------------------------------------
+// 全局样式
+// ----------------------------------------------------
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: $background-light;
+    color: #343a40;
+}
+
+#root {
+    // 关键优化：使用 max-width，并让 width 保持 fluid
+    max-width: 500px; 
+    width: 100%; // 让它适应父容器宽度
+    min-width: 320px; // 最小宽度限制
+    
+    // 边距调整
+    padding: 20px 25px; 
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; // 稍微减小主间隔，让内容更紧凑
+    
+    background-color: $card-light;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+}
+
+// 标题间距优化
+h2 {
+    font-size: 26px;
+    color: $primary-color;
+    text-align: center;
+    margin-bottom: 20px; // 稍微减小
+}
+
+h3 {
+    font-size: 18px;
+    color: #343a40; // 标题使用深色，更沉稳
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+p {
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid $border-color;
+    margin: 30px 0;
+}
+
+// ----------------------------------------------------
+// UI 组件样式
+// ----------------------------------------------------
+
+.info-card {
+    background-color: transparent; // 融入主背景
+    border: none;
+    border-radius: 8px;
+    padding: 0;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    &.fortune-result {
+        background-color: #f0f8ff; // 浅蓝色背景，突出当日结果
+        padding: 15px;
+        border: 1px solid #e0efff;
+    }
+}
+
+// 运势分数行布局优化
+.score-summary {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 10px; // 确保底部有间距
+}
+
+// 按钮样式
+button {
+    background-color: $primary-color;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 10px;
+
+    &:hover {
+        // 使用 color.adjust() 降低 10% 的亮度 (lightness)
+        background-color: color.adjust($primary-color, $lightness: -10%);
+    }
+
+    &:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+}
+
+// 输入框样式 (使用 Grid 布局)
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+
+    input[type="number"] {
+        padding: 8px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px; // 稍微小一点的圆角
+        font-size: 15px;
+        text-align: center;
+        width: 100%;
+        box-sizing: border-box;
+
+        &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+        }
+    }
+}
+
+// 运势评分颜色
+.score-good { color: $color-wood; font-weight: bold; }
+.score-medium { color: $color-earth; font-weight: bold; } 
+.score-bad { color: $color-fire; font-weight: bold; } 
+
+.imbalance-element {
+    font-weight: bold;
+    color: $color-fire; // 红色突出危险或需要注意
+}
+
+// 本命签名展示优化
+.signature-card {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    border: 1px solid $border-color;
+    border-radius: 6px;
+
+    .signature-item {
+        text-align: center;
+        padding: 0 5px;
+
+        &--label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            // 五行颜色指示
+            &.gold { color: $color-gold; }
+            &.wood { color: $color-wood; }
+            &.water { color: $color-water; }
+            &.fire { color: $color-fire; }
+            &.earth { color: $color-earth; }
+        }
+        &--value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+    }
+}
+
+.text-secondary {
+    color: $secondary-color; // 使用 SCSS 变量
+}
