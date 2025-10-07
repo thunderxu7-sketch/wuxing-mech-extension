@@ -45,7 +45,7 @@ export async function getStoredSignature(): Promise<UserSignature | null> {
 export async function setStoredSignature(signature: UserSignature): Promise<void> {
     if (!isExtensionEnv) {
         console.warn("[Storage] Not in extension environment. Returning null signature.");
-        return null; // 在本地预览时返回 null，模拟未设置签名
+        return;
     }
     await chrome.storage.local.set({ [USER_SIGNATURE_KEY]: signature });
 }
@@ -81,7 +81,7 @@ export async function getDailyCache(): Promise<{ date: string; data: FortuneResu
 export async function setDailyCache(data: FortuneResult): Promise<void> {
     if (!isExtensionEnv) {
         console.warn("[Storage] Not in extension environment. Returning null signature.");
-        return null; // 在本地预览时返回 null，模拟未设置签名
+        return;
     }
     const cache = {
         date: new Date().toDateString(),
