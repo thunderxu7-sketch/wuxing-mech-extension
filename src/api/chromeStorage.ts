@@ -1,5 +1,5 @@
 // src/api/chromeStorage.ts
-import type { UserSignature, FortuneResult } from '../utils/algorithm';
+import type { UserSignature, UserSignatureInput, FortuneResult } from '../utils/algorithm';
 
 const USER_SIGNATURE_KEY = 'user_signature';
 const DAILY_CACHE_KEY = 'daily_fortune_cache';
@@ -7,6 +7,25 @@ const USER_INPUT_KEY = 'user_input_birth';
 
 // 检查是否在 Chrome 扩展环境中的辅助函数
 const isExtensionEnv = typeof chrome !== 'undefined' && chrome.storage;
+
+// 辅助函数：安全地从 localStorage 读取
+const getLocal = (key: string): any => {
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : null;
+    } catch (e) {
+        return null;
+    }
+};
+
+// 辅助函数：安全地写入 localStorage
+const setLocal = (key: string, data: any): void => {
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+        console.error("Could not save to localStorage:", e);
+    }
+};
 
 /**
  * 获取存储的用户五行数字签名。
@@ -76,7 +95,11 @@ export async function setDailyCache(data: FortuneResult): Promise<void> {
  */
 export async function getUserSignatureInput(): Promise<UserSignatureInput | null> {
     if (!isExtensionEnv) {
-        return { year: 1990, month: 1, day: 1, hour: 12 } as UserSignatureInput; // 本地预览时返回默认值
+        // 在本地环境使用 localStorage 模拟异步读取
+        // 注意：这里仍然返回一个 Promise，保持和 chrome.storage.local.get 的行为一致
+        const input = getLocal(USER_INPUT_KEY);
+        // 如果 localStorage 中没有，则返回 null，让 Popup 组件去使用默认值
+        return Promise.resolve(input as UserSignatureInput | null); 
     }
     const data = await chrome.storage.local.get(USER_INPUT_KEY);
     return data[USER_INPUT_KEY] || null;
@@ -87,8 +110,9 @@ export async function getUserSignatureInput(): Promise<UserSignatureInput | null
  */
 export async function setUserSignatureInput(input: UserSignatureInput): Promise<void> {
     if (!isExtensionEnv) {
-        console.warn("[Storage] Not in extension environment. Input not saved.");
-        return;
+        setLocal(USER_INPUT_KEY, input); // 写入 localStorage
+        return Promise.resolve();
     }
     await chrome.storage.local.set({ [USER_INPUT_KEY]: input });
+    return Promise.resolve();
 }

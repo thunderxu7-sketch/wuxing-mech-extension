@@ -39,6 +39,14 @@ const INITIAL_INPUT: UserSignatureInput = {
     hour: 12,
 };
 
+// 内部状态处理字符串，方便用户输入
+interface InputState {
+    year: string | number;
+    month: string | number;
+    day: string | number;
+    hour: string | number;
+}
+
 // ----------------------------------------------------
 // UI 组件
 // ----------------------------------------------------
@@ -48,21 +56,24 @@ const BirthInputForm: React.FC<{
     currentInput: UserSignatureInput;
     isLoading: boolean; // 新增加载状态，禁用按钮
 }> = ({ onSubmit, currentInput, isLoading }) => {
-    // 内部状态处理字符串，方便用户输入
-    interface InputState {
-        year: string | number;
-        month: string | number;
-        day: string | number;
-        hour: string | number;
-    }
-
-    // 初始化状态时，将数字转为字符串
+    // 初始化状态
     const [input, setInput] = useState<InputState>({
         year: currentInput.year.toString(),
         month: currentInput.month.toString(),
         day: currentInput.day.toString(),
         hour: currentInput.hour.toString(),
     });
+
+    // 2. 【关键修复】使用 useEffect 监听并同步外部属性
+    useEffect(() => {
+        // 当 currentInput (来自异步存储) 发生变化时，更新内部状态
+        setInput({
+            year: currentInput.year.toString(),
+            month: currentInput.month.toString(),
+            day: currentInput.day.toString(),
+            hour: currentInput.hour.toString(),
+        });
+    }, [currentInput]); // 依赖项为 currentInput
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -268,7 +279,6 @@ export const Popup: React.FC = () => {
     const [userSignatureInput, setUserSignatureInput] = useState<UserSignatureInput | null>(null);
     const [fortuneResult, setFortuneResult] = useState<FortuneResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [userInput, setUserInput] = useState<UserSignatureInput>(INITIAL_INPUT); // 保存用户最后一次输入
     const [anchorRecommendation, setAnchorRecommendation] = useState<NftAnchorRecommendation | null>(null);
     const [physicalRecommendation, setPhysicalRecommendation] = useState<PhysicalAnchorRecommendation | null>(null);
 
@@ -307,13 +317,14 @@ export const Popup: React.FC = () => {
     useEffect(() => {
         // 1. 加载用户输入和签名
         chromeStorage.getUserSignatureInput().then(input => {
-            // 显式指定 input 的类型
-            const typedInput: UserSignatureInput | null = input;
-            if (typedInput) {
-                setUserSignatureInput(input);
+            const loadedInput = input;
+            // 不再需要显式指定 typedInput，直接使用 loadedInput 即可
+            if (loadedInput) { 
+                setUserSignatureInput(loadedInput);
                 
                 // 2. 立即计算本命签名
-                const signature = calculateUserSignature(input);
+                // 这里的 loadedInput 已经被 TypeScript 安全地推断为 UserSignatureInput
+                const signature = calculateUserSignature(loadedInput);
                 setUserSignature(signature);
                 
                 // 3. 主动计算并设置今日运势 (新增)
@@ -327,7 +338,6 @@ export const Popup: React.FC = () => {
     // 处理用户提交出生时间
     const handleInputSubmit = useCallback(async (input: UserSignatureInput) => {
         setIsLoading(true);
-        setUserInput(input); // 更新状态中的输入数据
         
         // 1. 保存用户输入 (新增)
         await chromeStorage.setUserSignatureInput(input); 
@@ -388,8 +398,7 @@ export const Popup: React.FC = () => {
                     </p>
                     <BirthInputForm 
                         onSubmit={handleInputSubmit}
-                        // 确保传递给表单的是有效的数字输入
-                        currentInput={userSignatureInput || { year: 1990, month: 1, day: 1, hour: 12 }} 
+                        currentInput={userSignatureInput || INITIAL_INPUT}
                         isLoading={isLoading}
                     />
                 </>
@@ -410,9 +419,10 @@ export const Popup: React.FC = () => {
                     
                     <hr />
                     <h4 style={{ textAlign: 'center', color: '#6c757d', marginBottom: '15px' }}>重新校准本命五行:</h4>
+                    
                     <BirthInputForm 
                         onSubmit={handleInputSubmit}
-                        currentInput={userInput} 
+                        currentInput={userSignatureInput || INITIAL_INPUT}
                         isLoading={isLoading}
                     />
                 </>
