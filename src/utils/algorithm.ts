@@ -56,6 +56,40 @@ export interface NftAnchorRecommendation {
     keywords: string[];
 }
 
+/**
+ * @description 实体产品/生活方式锚点推荐的结构定义
+ */
+export interface PhysicalAnchorRecommendation {
+    /**
+     * @description 主要的颜色/元素主题
+     */
+    themeColor: string;
+    /**
+     * @description 水晶/宝石推荐
+     */
+    crystal: {
+        name: string;
+        // 这是一个占位符，实际中会是联盟链接或产品ID
+        buyLink: string; 
+    };
+    /**
+     * @description 塔罗牌/心灵指引建议
+     */
+    tarotAdvice: string;
+    /**
+     * @description 生活方式/周边产品推荐
+     */
+    lifestyle: {
+        name: string;
+        buyLink: string;
+    };
+}
+
+// ----------------------------------------------------------------------
+// 辅助函数：生成一个占位符购买链接 (实际应用中需要替换为真实链接)
+const generatePlaceholderLink = (product: string) => 
+    `https://example.com/buy?q=${encodeURIComponent(product)}`;
+
 // --- 辅助数据和函数 ---
 
 const HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -323,6 +357,91 @@ export function getNftAnchorRecommendation(result: FortuneResult): NftAnchorReco
                 theme: "保持稳定",
                 action: "五行平衡，保持观察，以稳健的土元素为主。",
                 keywords: ["持有稳定币", "头部蓝筹 NFT", "长期质押"],
+            };
+    }
+}
+
+/**
+ * @description 根据运势结果（失衡元素）生成实体产品和生活方式推荐。
+ * 策略：推荐的锚点旨在通过实体接触或行为来平衡失衡元素。
+ * @param result 运势计算结果
+ * @returns 包含推荐产品和建议的对象
+ */
+export function getPhysicalAnchorRecommendation(result: FortuneResult): PhysicalAnchorRecommendation {
+    const imbalance = result.imbalanceElement;
+
+    switch (imbalance) {
+        case 'gold':
+            return {
+                themeColor: "红 / 黑 (火克金，水泻金)",
+                crystal: {
+                    name: "黑曜石 (去燥/吸纳)",
+                    buyLink: generatePlaceholderLink("黑曜石手链")
+                },
+                tarotAdvice: "审视你的『宝剑』牌组，寻找行动与克制之间的平衡。",
+                lifestyle: {
+                    name: "红色香薰蜡烛",
+                    buyLink: generatePlaceholderLink("红色香薰蜡烛")
+                }
+            };
+        case 'wood':
+            return {
+                themeColor: "白 / 红 (金克木，火泻木)",
+                crystal: {
+                    name: "白水晶簇 (金气镇压)",
+                    buyLink: generatePlaceholderLink("白水晶簇")
+                },
+                tarotAdvice: "关注『权杖』牌组的能量，将生发之力转化为具体行动。",
+                lifestyle: {
+                    name: "限量版艺术收藏画册",
+                    buyLink: generatePlaceholderLink("艺术收藏画册")
+                }
+            };
+        case 'water':
+            return {
+                themeColor: "黄 / 紫 (土克水，金生水)",
+                crystal: {
+                    name: "黄水晶 (土气稳定)",
+                    buyLink: generatePlaceholderLink("黄水晶摆件")
+                },
+                tarotAdvice: "冥想与『五芒星』牌组，让财务和现实基础更加稳固。",
+                lifestyle: {
+                    name: "土相星座周边 (摩羯、金牛、处女)",
+                    buyLink: generatePlaceholderLink("土相星座饰品")
+                }
+            };
+        case 'fire':
+            return {
+                themeColor: "蓝 / 绿 (水克火，木生火)",
+                crystal: {
+                    name: "青金石 (水气降温)",
+                    buyLink: generatePlaceholderLink("青金石吊坠")
+                },
+                tarotAdvice: "多加解读『圣杯』牌组，关注内心感受与情感交流，而非外部冲突。",
+                lifestyle: {
+                    name: "蓝色主题的茶具/水墨画",
+                    buyLink: generatePlaceholderLink("蓝色茶具")
+                }
+            };
+        case 'earth':
+            return {
+                themeColor: "绿 / 白 (木克土，金泻土)",
+                crystal: {
+                    name: "绿幽灵/孔雀石 (木气疏通)",
+                    buyLink: generatePlaceholderLink("绿幽灵手串")
+                },
+                tarotAdvice: "通过『权杖』和『愚人』牌，鼓励自己打破现状，迎接改变。",
+                lifestyle: {
+                    name: "小巧精致的盆栽绿植",
+                    buyLink: generatePlaceholderLink("室内盆栽")
+                }
+            };
+        default:
+            return {
+                themeColor: "黄 / 金",
+                crystal: { name: "中性白水晶", buyLink: generatePlaceholderLink("白水晶") },
+                tarotAdvice: "当前能量平衡，保持警觉，抽一张大阿卡那牌作为指引。",
+                lifestyle: { name: "基础护肤品", buyLink: generatePlaceholderLink("基础护肤套装") }
             };
     }
 }

@@ -1,21 +1,24 @@
 // src/ui/Popup.tsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-// 导入核心逻辑 (函数是值，不需要 type)
-import { 
-    calculateUserSignature, 
-    calculateDailyCosmos, 
-    calculateFortune, 
-    getNftAnchorRecommendation
-} from '../utils/algorithm';
 // 导入类型 (需要 type)
 import type { 
     UserSignatureInput, 
     UserSignature, 
     FortuneResult,
     FiveElementVector,
-    NftAnchorRecommendation 
-} from '../utils/algorithm'; 
+    NftAnchorRecommendation,
+    PhysicalAnchorRecommendation
+} from '../utils/algorithm';
+
+// 导入核心逻辑 (函数是值，不需要 type)
+import { 
+    calculateUserSignature, 
+    calculateDailyCosmos, 
+    calculateFortune, 
+    getNftAnchorRecommendation,
+    getPhysicalAnchorRecommendation
+} from '../utils/algorithm';
 
 import { 
     getStoredSignature, 
@@ -25,7 +28,7 @@ import {
 } from '../api/chromeStorage';
 
 // 导入雷达图组件
-import { RadarChart } from './components/Radarchart'; 
+import { RadarChart } from './components/RadarChart'; 
 
 // 初始的用户输入对象
 const INITIAL_INPUT: UserSignatureInput = {
@@ -85,10 +88,12 @@ const FortuneDisplay: React.FC<{
     result: FortuneResult;
     userSignature: UserSignature;
     recommendation: NftAnchorRecommendation | null;
-}> = ({ result, userSignature, recommendation }) => {
+    physicalRecommendation: PhysicalAnchorRecommendation | null;
+}> = ({ result, userSignature, recommendation, physicalRecommendation }) => {
     const scoreClassName = result.score >= 70 ? 'score-good' : (result.score >= 50 ? 'score-medium' : 'score-bad');
     return (
         <>
+            {/* 本命五行签名和今日能量校准部分 */}
             <div className="info-card">
                 <h3>本命五行签名</h3>
                 <p style={{ marginTop: '-10px' }} className='text-secondary'>
@@ -141,7 +146,7 @@ const FortuneDisplay: React.FC<{
 
             <hr /> 
             
-            {/* 新增 NFT 锚点推荐卡片 */}
+            {/* NFT 锚点推荐卡片 */}
             {recommendation && (
                 <div className="info-card" style={{ padding: '15px 0' }}>
                     <h3>🧭 推荐 NFT 锚点</h3>
@@ -172,6 +177,47 @@ const FortuneDisplay: React.FC<{
                     </div>
                 </div>
             )}
+
+            <hr /> 
+            
+            {/* 新增实体产品锚点推荐卡片 */}
+            {physicalRecommendation && (
+                <div className="info-card" style={{ padding: '15px 0' }}>
+                    <h3>🧘 实体锚点与生活建议</h3>
+                    <p style={{ marginTop: '-5px', fontSize: '0.95em' }}>
+                        主题颜色: <span style={{ fontWeight: 'bold' }}>{physicalRecommendation.themeColor}</span>
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        
+                        {/* 水晶推荐 */}
+                        <div className="recommendation-box" style={{ padding: '8px', border: '1px solid #e9ecef', borderRadius: '4px' }}>
+                            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>🔮 水晶推荐</p>
+                            <a href={physicalRecommendation.crystal.buyLink} target="_blank" rel="noopener noreferrer" 
+                                style={{ display: 'block', color: '#007bff', textDecoration: 'none', fontSize: '0.9em' }}>
+                                购买: {physicalRecommendation.crystal.name}
+                            </a>
+                        </div>
+                        
+                        {/* 生活方式推荐 */}
+                        <div className="recommendation-box" style={{ padding: '8px', border: '1px solid #e9ecef', borderRadius: '4px' }}>
+                            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>🏠 生活周边</p>
+                            <a href={physicalRecommendation.lifestyle.buyLink} target="_blank" rel="noopener noreferrer" 
+                                style={{ display: 'block', color: '#007bff', textDecoration: 'none', fontSize: '0.9em' }}>
+                                购买: {physicalRecommendation.lifestyle.name}
+                            </a>
+                        </div>
+                    </div>
+                    
+                    {/* 塔罗建议 */}
+                    <div style={{ padding: '10px', borderTop: '1px solid #e9ecef', marginTop: '10px' }}>
+                         <p style={{ margin: '0 0 0 0', fontWeight: 'bold', fontSize: '0.95em' }}>✨ 心灵指引 (塔罗)</p>
+                         <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#6c757d' }}>
+                             {physicalRecommendation.tarotAdvice}
+                         </p>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
@@ -186,6 +232,7 @@ export const Popup: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [userInput, setUserInput] = useState<UserSignatureInput>(INITIAL_INPUT); // 保存用户最后一次输入
     const [anchorRecommendation, setAnchorRecommendation] = useState<NftAnchorRecommendation | null>(null);
+    const [physicalRecommendation, setPhysicalRecommendation] = useState<PhysicalAnchorRecommendation | null>(null);
 
     // 核心计算和存储函数
     const calculateAndSetFortune = useCallback(async (signature: UserSignature) => {
@@ -206,12 +253,14 @@ export const Popup: React.FC = () => {
         const result = calculateFortune(signature, V_Day);
 
         // 3. 生成推荐结果
-        const recommendation = getNftAnchorRecommendation(result);
+        const nftRecommendation = getNftAnchorRecommendation(result);
+        const physicalRecommendation = getPhysicalAnchorRecommendation(result);
         
         // 4. 存储新结果 (本地预览时 setDailyCache 会跳过)
         await setDailyCache(result);
         setFortuneResult(result);
-        setAnchorRecommendation(recommendation);
+        setAnchorRecommendation(nftRecommendation);
+        setPhysicalRecommendation(physicalRecommendation);
         setIsLoading(false);
         console.log("Calculated and cached new fortune.");
     }, []);
@@ -289,6 +338,7 @@ export const Popup: React.FC = () => {
                             result={fortuneResult}
                             userSignature={userSignature}
                             recommendation={anchorRecommendation}
+                            physicalRecommendation={physicalRecommendation}
                         />
                     ) : (
                         <p style={{ textAlign: 'center', color: '#dc3545' }}>今日运势计算失败或正在等待计算。</p> // 理论上不会出现，但作为后备
