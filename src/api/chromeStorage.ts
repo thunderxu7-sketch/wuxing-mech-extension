@@ -3,6 +3,7 @@ import type { UserSignature, FortuneResult } from '../utils/algorithm';
 
 const USER_SIGNATURE_KEY = 'user_signature';
 const DAILY_CACHE_KEY = 'daily_fortune_cache';
+const USER_INPUT_KEY = 'user_input_birth';
 
 // 检查是否在 Chrome 扩展环境中的辅助函数
 const isExtensionEnv = typeof chrome !== 'undefined' && chrome.storage;
@@ -68,4 +69,26 @@ export async function setDailyCache(data: FortuneResult): Promise<void> {
         data: data,
     };
     await chrome.storage.local.set({ [DAILY_CACHE_KEY]: cache });
+}
+
+/**
+ * 【新增】获取存储的用户出生时间输入。
+ */
+export async function getUserSignatureInput(): Promise<UserSignatureInput | null> {
+    if (!isExtensionEnv) {
+        return { year: 1990, month: 1, day: 1, hour: 12 } as UserSignatureInput; // 本地预览时返回默认值
+    }
+    const data = await chrome.storage.local.get(USER_INPUT_KEY);
+    return data[USER_INPUT_KEY] || null;
+}
+
+/**
+ * 【新增】设置用户出生时间输入。
+ */
+export async function setUserSignatureInput(input: UserSignatureInput): Promise<void> {
+    if (!isExtensionEnv) {
+        console.warn("[Storage] Not in extension environment. Input not saved.");
+        return;
+    }
+    await chrome.storage.local.set({ [USER_INPUT_KEY]: input });
 }

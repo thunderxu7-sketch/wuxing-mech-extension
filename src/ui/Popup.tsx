@@ -1,6 +1,7 @@
 // src/ui/Popup.tsx
 
 import React, { useState, useEffect, useCallback } from 'react';
+import * as chromeStorage from '../api/chromeStorage';
 // 导入类型 (需要 type)
 import type { 
     UserSignatureInput, 
@@ -47,22 +48,58 @@ const BirthInputForm: React.FC<{
     currentInput: UserSignatureInput;
     isLoading: boolean; // 新增加载状态，禁用按钮
 }> = ({ onSubmit, currentInput, isLoading }) => {
-    const [input, setInput] = useState(currentInput);
+    // 内部状态处理字符串，方便用户输入
+    interface InputState {
+        year: string | number;
+        month: string | number;
+        day: string | number;
+        hour: string | number;
+    }
+
+    // 初始化状态时，将数字转为字符串
+    const [input, setInput] = useState<InputState>({
+        year: currentInput.year.toString(),
+        month: currentInput.month.toString(),
+        day: currentInput.day.toString(),
+        hour: currentInput.hour.toString(),
+    });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseInt(e.target.value, 10);
-        if (!isNaN(value)) {
-             setInput({ ...input, [e.target.name]: value });
+        const { name, value } = e.target;
+    
+        // 允许空字符串，并更新状态
+        setInput(prev => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    // 提交逻辑需要更新：将字符串转回数字并验证
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // 提交前进行验证和转换
+        const year = parseInt(input.year as string, 10);
+        const month = parseInt(input.month as string, 10);
+        const day = parseInt(input.day as string, 10);
+        const hour = parseInt(input.hour as string, 10);
+        
+        // 简单的必填项检查 (虽然 input 上有 required，但这里更安全)
+        if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour)) {
+            alert("请输入完整的公历出生时间！");
+            return;
         }
+        
+        onSubmit({ year, month, day, hour }); // 提交正确的数字对象
     };
 
     return (
-       <form onSubmit={(e) => { e.preventDefault(); onSubmit(input); }}>
+       <form onSubmit={handleSubmit}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                您的公历出生时间:
+                您的公历出生时间 (年/月/日/时):
             </label>
-            {/* 使用新的 CSS 类 input-grid 替代内联 flex 布局 */}
             <div className="input-grid"> 
+            {/* 输入框的值现在直接绑定到 input[name]，不需要再解析为数字 */}
                 <input name="year" type="number" value={input.year} onChange={handleChange} min="1900" max="2100" placeholder="年" required />
                 <input name="month" type="number" value={input.month} onChange={handleChange} min="1" max="12" placeholder="月" required />
                 <input name="day" type="number" value={input.day} onChange={handleChange} min="1" max="31" placeholder="日" required />
@@ -228,6 +265,7 @@ const FortuneDisplay: React.FC<{
 
 export const Popup: React.FC = () => {
     const [userSignature, setUserSignature] = useState<UserSignature | null>(null);
+    const [userSignatureInput, setUserSignatureInput] = useState<UserSignatureInput | null>(null);
     const [fortuneResult, setFortuneResult] = useState<FortuneResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [userInput, setUserInput] = useState<UserSignatureInput>(INITIAL_INPUT); // 保存用户最后一次输入
@@ -265,19 +303,44 @@ export const Popup: React.FC = () => {
         console.log("Calculated and cached new fortune.");
     }, []);
 
+    // 数据加载 useEffect
+    useEffect(() => {
+        // 1. 加载用户输入和签名
+        chromeStorage.getUserSignatureInput().then(input => {
+            // 显式指定 input 的类型
+            const typedInput: UserSignatureInput | null = input;
+            if (typedInput) {
+                setUserSignatureInput(input);
+                
+                // 2. 立即计算本命签名
+                const signature = calculateUserSignature(input);
+                setUserSignature(signature);
+                
+                // 3. 主动计算并设置今日运势 (新增)
+                calculateAndSetFortune(signature); 
+            }
+            setIsLoading(false);
+        });
+
+    }, [calculateAndSetFortune]);
+
     // 处理用户提交出生时间
     const handleInputSubmit = useCallback(async (input: UserSignatureInput) => {
         setIsLoading(true);
         setUserInput(input); // 更新状态中的输入数据
         
-        // 1. 计算新的本命签名
+        // 1. 保存用户输入 (新增)
+        await chromeStorage.setUserSignatureInput(input); 
+        setUserSignatureInput(input); // 更新状态
+
+        // 2. 计算新的本命签名
         const signature = calculateUserSignature(input);
         
-        // 2. 存储签名 (本地预览时 setStoredSignature 会跳过)
+        // 3. 存储签名 (本地预览时 setStoredSignature 会跳过)
         await setStoredSignature(signature);
         setUserSignature(signature);
 
-        // 3. 用新的签名计算今日运势
+        // 4. 用新的签名计算今日运势
         await calculateAndSetFortune(signature);
         setIsLoading(false);
         
@@ -325,7 +388,8 @@ export const Popup: React.FC = () => {
                     </p>
                     <BirthInputForm 
                         onSubmit={handleInputSubmit}
-                        currentInput={userInput} 
+                        // 确保传递给表单的是有效的数字输入
+                        currentInput={userSignatureInput || { year: 1990, month: 1, day: 1, hour: 12 }} 
                         isLoading={isLoading}
                     />
                 </>
