@@ -281,6 +281,11 @@ export function calculateFortune(V_User: FiveElementVector, V_Day: FiveElementVe
         }
     });
 
+    // 新增：步骤 3.5 确保所有能量值为整数，避免浮点数问题影响 maxVal 计算
+    Object.keys(V_Final).forEach(key => {
+        V_Final[key as keyof FiveElementVector] = Math.round(V_Final[key as keyof FiveElementVector]);
+    });
+
     // 4. 计算不平衡度和分数
     const energies = Object.values(V_Final);
     const maxEnergy = Math.max(...energies);

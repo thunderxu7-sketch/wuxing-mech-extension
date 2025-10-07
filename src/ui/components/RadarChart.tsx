@@ -8,6 +8,15 @@ interface RadarChartProps {
     size?: number; // 画布大小
 }
 
+// 定义五行在雷达图上的固定顺序
+const RADAR_ELEMENT_ORDER: (keyof FiveElementVector)[] = [
+    'gold', // 顶部
+    'wood', 
+    'water', 
+    'fire', 
+    'earth',
+];
+
 const FIVE_ELEMENT_NAMES: { [key in keyof FiveElementVector]: string } = {
     gold: '金',
     wood: '木',
@@ -46,7 +55,8 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size = 180 }) => {
         ctx.strokeStyle = '#e9ecef'; // 浅灰色网格线
         ctx.lineWidth = 1;
 
-        const numPoints = Object.keys(data).length;
+        // 从 RADAR_ELEMENT_ORDER 获取元素数量和角度
+        const numPoints = RADAR_ELEMENT_ORDER.length;
         const angleIncrement = (Math.PI * 2) / numPoints;
 
         // 绘制同心圆作为参考（简化为2-3个圆）
@@ -73,52 +83,67 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size = 180 }) => {
         ctx.fillStyle = 'rgba(0, 123, 255, 0.2)'; // 填充区域透明蓝色
         ctx.lineWidth = 2;
 
-        const maxVal = Math.max(...Object.values(data), 1); // 防止除以0，至少为1
-        let firstPointX = 0, firstPointY = 0;
+        // 确保 maxVal 只取有效数字的最大值
+        const energyValues = RADAR_ELEMENT_ORDER.map(key => data[key]).filter(v => typeof v === 'number');
+        const maxVal = Math.max(...energyValues, 1); 
+        // 我们将所有点的位置预先计算出来
+        const points: { x: number, y: number }[] = [];
 
-        Object.keys(data).forEach((key, index) => {
-            const elementKey = key as keyof FiveElementVector;
+        RADAR_ELEMENT_ORDER.forEach((elementKey, index) => {
             const value = data[elementKey];
-            const normalizedValue = value / maxVal; // 归一化到 0-1
+            
+            // 如果 value 不是有效数字，我们用 0 替代，确保路径不中断
+            const safeValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
+
+            const normalizedValue = safeValue / maxVal; // 归一化到 0-1
             const pointRadius = radius * normalizedValue;
 
             const angle = index * angleIncrement - Math.PI / 2;
             const x = centerX + pointRadius * Math.cos(angle);
             const y = centerY + pointRadius * Math.sin(angle);
+            
+            points.push({ x, y });
 
-            if (index === 0) {
-                ctx.moveTo(x, y);
-                firstPointX = x;
-                firstPointY = y;
-            } else {
-                ctx.lineTo(x, y);
-            }
-
-            // 绘制元素名称标签
-            ctx.fillStyle = FIVE_ELEMENT_COLORS[elementKey]; // 使用元素专属颜色
+            // 绘制元素名称标签 (保持不变)
+            ctx.fillStyle = FIVE_ELEMENT_COLORS[elementKey];
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            // 调整标签位置，使其不与线条重叠
-            const labelDistance = radius + 15; // 标签距离中心更远
+            const labelDistance = radius + 15;
             const labelX = centerX + labelDistance * Math.cos(angle);
             const labelY = centerY + labelDistance * Math.sin(angle);
             ctx.fillText(FIVE_ELEMENT_NAMES[elementKey], labelX, labelY);
+        });
+
+        // ----------------------------------------------------
+        // 循环连线
+        // ----------------------------------------------------
+        if (points.length > 0) {
+            // 1. 移动到第一个点
+            ctx.moveTo(points[0].x, points[0].y);
             
-            // 可选：绘制数据点
+            // 2. 连接剩余的点
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y);
+            }
+
+            // 3. 闭合路径
+            ctx.lineTo(points[0].x, points[0].y); 
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // ----------------------------------------------------
+        // 再次循环：绘制数据点（保持在最上层）
+        // ----------------------------------------------------
+        points.forEach(({ x, y }) => {
+            ctx.fillStyle = ctx.strokeStyle; // 数据点的颜色与连线相同
             ctx.beginPath();
             ctx.arc(x, y, 3, 0, Math.PI * 2);
             ctx.fill();
-            ctx.stroke();
         });
-
-        if (numPoints > 0) {
-            ctx.lineTo(firstPointX, firstPointY); // 闭合路径
-        }
-        ctx.closePath();
-        ctx.fill(); // 填充区域
-        ctx.stroke(); // 绘制边框
 
     }, [data, size]);
 
