@@ -34,6 +34,28 @@ export interface FortuneResult {
     energyDifference: FiveElementVector;
 }
 
+/**
+ * @description NFT/投资锚点推荐结果的结构定义
+ */
+export interface NftAnchorRecommendation {
+    /**
+     * @description 主要推荐元素的名称（如：木、火）
+     */
+    primaryElement: keyof FiveElementVector;
+    /**
+     * @description 推荐的锚点主题或赛道
+     */
+    theme: string;
+    /**
+     * @description 推荐的行动建议（投资哲学）
+     */
+    action: string;
+    /**
+     * @description 推荐的 NFT 类型或赛道列表
+     */
+    keywords: string[];
+}
+
 // --- 辅助数据和函数 ---
 
 const HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -255,4 +277,60 @@ export function calculateFortune(V_User: FiveElementVector, V_Day: FiveElementVe
         imbalanceElement,
         energyDifference: V_Final,
     };
+}
+
+/**
+ * @description 根据运势结果（失衡元素）生成 NFT/投资锚点推荐。
+ * 策略：推荐的锚点应能 "泄" 或 "克制" 失衡元素，以达到能量平衡。
+ * @param result 运势计算结果
+ * @returns 包含推荐主题和行动建议的对象
+ */
+export function getNftAnchorRecommendation(result: FortuneResult): NftAnchorRecommendation {
+    const imbalance = result.imbalanceElement;
+    
+    // 使用一个 switch 语句实现五行锚点推荐的核心逻辑
+    switch (imbalance) {
+        case 'gold':
+            return {
+                primaryElement: 'fire', // 火克金 (克制)
+                theme: "流动性与消耗 (Fire & Water)",
+                action: "金气过盛，宜选择消耗性资产或高流动性项目，将能量转化为流通性。",
+                keywords: ["燃烧机制 NFT (Burn Mechanism)", "高流动性交易赛道", "游戏内消耗品", "稳定币质押 (Water)"],
+            };
+        case 'wood':
+            return {
+                primaryElement: 'gold', // 金克木 (克制)
+                theme: "稀有性与抗通胀 (Gold & Fire)",
+                action: "木气过盛，宜选择稀缺、坚固、具备长期价值存储特性的资产。",
+                keywords: ["蓝筹 NFT 收藏品", "限量版艺术品", "高稀有度 PFP", "元宇宙房产 (Fire)"],
+            };
+        case 'water':
+            return {
+                primaryElement: 'earth', // 土克水 (克制)
+                theme: "稳定与基础建设 (Earth & Wood)",
+                action: "水气过盛，宜选择基础扎实、拥有明确应用场景和稳定增长预期的项目。",
+                keywords: ["DeFi 基础设施协议", "数据存储 NFT", "域名服务 (ENS/SNS)", "创作者经济平台 (Wood)"],
+            };
+        case 'fire':
+            return {
+                primaryElement: 'water', // 水克火 (克制)
+                theme: "理性与治理 (Water & Earth)",
+                action: "火气过盛，宜选择冷静、理性、具有良好治理机制的项目，避免 FOMO 情绪。",
+                keywords: ["DAO 治理代币", "身份/声誉系统 NFT", "高息稳定收益（如 Liquid Staking）(Water)", "链上保险 (Earth)"],
+            };
+        case 'earth':
+            return {
+                primaryElement: 'wood', // 木克土 (克制)
+                theme: "成长与艺术 (Wood & Gold)",
+                action: "土气过盛，宜选择具有成长性、叙事性或艺术价值的项目，激活僵化能量。",
+                keywords: ["生成艺术 NFT (Generative Art)", "新兴 IP 授权", "游戏公会/社区 NFT (Wood)", "文化/收藏品赛道 (Gold)"],
+            };
+        default:
+            return {
+                primaryElement: 'earth',
+                theme: "保持稳定",
+                action: "五行平衡，保持观察，以稳健的土元素为主。",
+                keywords: ["持有稳定币", "头部蓝筹 NFT", "长期质押"],
+            };
+    }
 }

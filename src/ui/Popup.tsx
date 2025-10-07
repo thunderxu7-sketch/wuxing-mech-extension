@@ -6,13 +6,15 @@ import {
     calculateUserSignature, 
     calculateDailyCosmos, 
     calculateFortune, 
+    getNftAnchorRecommendation
 } from '../utils/algorithm';
 // 导入类型 (需要 type)
 import type { 
     UserSignatureInput, 
     UserSignature, 
     FortuneResult,
-    FiveElementVector 
+    FiveElementVector,
+    NftAnchorRecommendation 
 } from '../utils/algorithm'; 
 
 import { 
@@ -79,7 +81,11 @@ const FIVE_ELEMENT_NAMES_MAP: { [key in keyof FiveElementVector]: string } = {
 };
 
 // 运势展示组件
-const FortuneDisplay: React.FC<{ result: FortuneResult; userSignature: UserSignature }> = ({ result, userSignature }) => {
+const FortuneDisplay: React.FC<{
+    result: FortuneResult;
+    userSignature: UserSignature;
+    recommendation: NftAnchorRecommendation | null;
+}> = ({ result, userSignature, recommendation }) => {
     const scoreClassName = result.score >= 70 ? 'score-good' : (result.score >= 50 ? 'score-medium' : 'score-bad');
     return (
         <>
@@ -132,6 +138,40 @@ const FortuneDisplay: React.FC<{ result: FortuneResult; userSignature: UserSigna
                 <h4 style={{ textAlign: 'center', marginTop: '15px' }}>五行能量分布可视化</h4>
                 <RadarChart data={result.energyDifference} />
             </div>
+
+            <hr /> 
+            
+            {/* 新增 NFT 锚点推荐卡片 */}
+            {recommendation && (
+                <div className="info-card" style={{ padding: '15px 0' }}>
+                    <h3>🧭 推荐 NFT 锚点</h3>
+                    <p style={{ marginTop: '-5px', fontSize: '1.1em', fontWeight: 'bold' }}>
+                        主题: {recommendation.theme}
+                    </p>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '0.9em' }}>
+                        行动哲学: {recommendation.action}
+                    </p>
+                    <div style={{ padding: '10px', border: '1px dashed #ced4da', borderRadius: '6px' }}>
+                        <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>推荐赛道/关键词:</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                            {recommendation.keywords.map((keyword, index) => (
+                                <span 
+                                    key={index} 
+                                    style={{ 
+                                        backgroundColor: '#e9ecef', 
+                                        color: '#343a40',
+                                        padding: '4px 8px', 
+                                        borderRadius: '12px', 
+                                        fontSize: '0.8em' 
+                                    }}
+                                >
+                                    {keyword}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
@@ -145,6 +185,7 @@ export const Popup: React.FC = () => {
     const [fortuneResult, setFortuneResult] = useState<FortuneResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [userInput, setUserInput] = useState<UserSignatureInput>(INITIAL_INPUT); // 保存用户最后一次输入
+    const [anchorRecommendation, setAnchorRecommendation] = useState<NftAnchorRecommendation | null>(null);
 
     // 核心计算和存储函数
     const calculateAndSetFortune = useCallback(async (signature: UserSignature) => {
@@ -163,10 +204,14 @@ export const Popup: React.FC = () => {
         // 2. 缓存过期或不存在，重新计算
         const V_Day = calculateDailyCosmos(today);
         const result = calculateFortune(signature, V_Day);
+
+        // 3. 生成推荐结果
+        const recommendation = getNftAnchorRecommendation(result);
         
-        // 3. 存储新结果 (本地预览时 setDailyCache 会跳过)
+        // 4. 存储新结果 (本地预览时 setDailyCache 会跳过)
         await setDailyCache(result);
         setFortuneResult(result);
+        setAnchorRecommendation(recommendation);
         setIsLoading(false);
         console.log("Calculated and cached new fortune.");
     }, []);
@@ -221,7 +266,7 @@ export const Popup: React.FC = () => {
 
     return (
         <div> {/* 移除 width 和 padding，让 CSS 控制 */}
-            <h2>安平五行阁</h2>
+            <h2>五行校准</h2>
             {isLoading && <p style={{ textAlign: 'center', color: '#007bff' }}>正在加载/计算...</p>}
             
             {!userSignature && !isLoading && (
@@ -240,7 +285,11 @@ export const Popup: React.FC = () => {
             {userSignature && !isLoading && (
                 <>
                     {fortuneResult ? (
-                        <FortuneDisplay result={fortuneResult} userSignature={userSignature} />
+                        <FortuneDisplay
+                            result={fortuneResult}
+                            userSignature={userSignature}
+                            recommendation={anchorRecommendation}
+                        />
                     ) : (
                         <p style={{ textAlign: 'center', color: '#dc3545' }}>今日运势计算失败或正在等待计算。</p> // 理论上不会出现，但作为后备
                     )}
