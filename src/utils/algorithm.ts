@@ -1,5 +1,5 @@
 // src/utils/algorithm.ts
-// 在文件顶部，可以保留或添加这些类型定义
+import solarLunar from 'solarlunar';
 export interface UserSignatureInput {
     year: number;
     month: number; // 1-12
@@ -76,8 +76,8 @@ const BRANCH_POWER = 40;
 
 
 /**
- * 一个简易的公历转四柱干支的工具函数
- * 注意：这是一个简化的实现，对于精确的节气计算可能存在微小误差，但对于项目演示和核心逻辑足够。
+ * [新版本] 使用 solarlunar 库将公历转为精确的四柱干支。
+ * 这个版本精确处理了节气，解决了原简化版函数的误差问题。
  */
 function getFourPillars(date: Date) {
     const year = date.getFullYear();
@@ -85,49 +85,41 @@ function getFourPillars(date: Date) {
     const day = date.getDate();
     const hour = date.getHours();
 
-    // 1. 计算年柱 (基于立春)
-    // 简化处理：以公历年来计算干支。精确算法应基于立春点。
-    const yearStemIndex = (year - 4) % 10;
-    const yearBranchIndex = (year - 4) % 12;
-    const yearPillar = {
-        stem: HEAVENLY_STEMS[yearStemIndex],
-        branch: EARTHLY_BRANCHES[yearBranchIndex]
-    };
+    // 使用 solarlunar.solar2lunar 获取完整的日历数据
+    const lunarData = solarLunar.solar2lunar(year, month, day);
 
-    // 2. 计算月柱 (基于节气，较复杂，这里使用简化的表格法)
-    // 月干公式：年干x2 + 月份 (例如，甲年(1)正月为丙(3)寅，(1*2+1)%10=3)
-    const monthStemIndex = ((yearStemIndex + 1) * 2 + month) % 10;
-    // 月支是固定的，寅为正月
-    const monthBranchIndex = (month + 1) % 12; // 简化模型，寅从索引2开始
-    const monthPillar = {
-        stem: HEAVENLY_STEMS[monthStemIndex < 0 ? monthStemIndex + 10 : monthStemIndex],
-        branch: EARTHLY_BRANCHES[monthBranchIndex]
-    };
-    
-    // 3. 计算日柱 (基于一个基准点进行推算)
-    const baseDate = new Date('1900-01-01');
-    const targetDate = new Date(year, month - 1, day);
-    const dayDiff = Math.floor((targetDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // 1900-01-01 是 庚子日 (天干索引6，地支索引0)
-    const dayStemIndex = (6 + dayDiff) % 10;
-    const dayBranchIndex = (0 + dayDiff) % 12;
-     const dayPillar = {
-        stem: HEAVENLY_STEMS[dayStemIndex < 0 ? dayStemIndex + 10 : dayStemIndex],
-        branch: EARTHLY_BRANCHES[dayBranchIndex < 0 ? dayBranchIndex + 12 : dayBranchIndex]
-    };
+    // 1. 获取年、月、日柱 (由库直接提供，非常精确)
+    const yearStem = lunarData.gzYear[0];
+    const yearBranch = lunarData.gzYear[1];
 
-    // 4. 计算时柱
-    // 时支是固定的
+    const monthStem = lunarData.gzMonth[0];
+    const monthBranch = lunarData.gzMonth[1];
+    
+    const dayStem = lunarData.gzDay[0];
+    const dayBranch = lunarData.gzDay[1];
+
+    // 2. 计算时柱 (时柱的计算依赖于日干，规则是固定的)
+    // 这个计算规则和你之前自己实现的完全一样，我们可以继续使用
+    const dayStemIndex = HEAVENLY_STEMS.indexOf(dayStem);
+    if (dayStemIndex === -1) {
+        // 增加一个错误处理，防止因找不到天干而出错
+        throw new Error(`Invalid day stem calculated: ${dayStem}`);
+    }
     const hourBranchIndex = Math.floor((hour + 1) / 2) % 12;
-    // 时干公式：日干x2 + 时支序数 (甲日(0)子时(0)为甲(0)子，(0*2+0)%10=0)
-    const hourStemIndex = ((dayStemIndex) * 2 + hourBranchIndex) % 10;
-    const hourPillar = {
-        stem: HEAVENLY_STEMS[hourStemIndex < 0 ? hourStemIndex + 10 : hourStemIndex],
-        branch: EARTHLY_BRANCHES[hourBranchIndex]
+    // 时干公式：日干序数 * 2 + 时支序数
+    // 例如：甲日(0)子时(0) -> 0*2+0=0 -> 甲子
+    // 庚日(6)午时(6) -> 6*2+6=18 -> 18%10=8 -> 壬午
+    const hourStemIndex = (dayStemIndex * 2 + hourBranchIndex) % 10;
+    
+    const hourStem = HEAVENLY_STEMS[hourStemIndex];
+    const hourBranch = EARTHLY_BRANCHES[hourBranchIndex];
+    
+    return {
+        yearPillar: { stem: yearStem, branch: yearBranch },
+        monthPillar: { stem: monthStem, branch: monthBranch },
+        dayPillar: { stem: dayStem, branch: dayBranch },
+        hourPillar: { stem: hourStem, branch: hourBranch },
     };
-
-    return { yearPillar, monthPillar, dayPillar, hourPillar };
 }
 
 
