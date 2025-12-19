@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "安平五行阁 (WuXing Calibrate)",
+  "name": "五行校准 (WuXing Calibrate)",
   "version": "1.0.0",
   "description": "算法驱动的每日能量校准。",
   "icons": {
@@ -11,7 +11,7 @@
   "action": {
     "default_popup": "index.html",
     "default_icon": "icon48.png",
-    "default_title": "安平五行阁"
+    "default_title": "五行校准"
   },
   "permissions": [
     "storage" 

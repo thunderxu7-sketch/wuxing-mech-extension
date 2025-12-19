@@ -131,28 +131,31 @@ const FIVE_ELEMENT_NAMES_MAP: { [key in keyof FiveElementVector]: string } = {
     earth: '土',
 };
 
-// 运势展示组件
+// ----------------------------------------------------
+// 运势展示组件 (FortuneDisplay) - 最终优化版
+// ----------------------------------------------------
 const FortuneDisplay: React.FC<{
     result: FortuneResult;
     userSignature: UserSignature;
     recommendation: NftAnchorRecommendation | null;
     physicalRecommendation: PhysicalAnchorRecommendation | null;
 }> = ({ result, userSignature, recommendation, physicalRecommendation }) => {
+    
+    // 根据分数判断颜色等级
     const scoreClassName = result.score >= 70 ? 'score-good' : (result.score >= 50 ? 'score-medium' : 'score-bad');
+
     return (
         <>
-            {/* 本命五行签名和今日能量校准部分 */}
+            {/* 1. 本命五行签名 */}
             <div className="info-card">
                 <h3>本命五行签名</h3>
                 <p style={{ marginTop: '-10px' }} className='text-secondary'>
                     根据您的出生时间，您的本命五行能量基准是：
                 </p>
                 
-                {/* 使用新的 signature-card 布局 */}
                 <div className="signature-card">
                     {Object.entries(userSignature).map(([element, value]) => (
                         <div key={element} className="signature-item">
-                            {/* 应用元素专属颜色类 */}
                             <div className={`signature-item--label ${element}`}> 
                                 {FIVE_ELEMENT_NAMES_MAP[element as keyof FiveElementVector]}
                             </div>
@@ -162,15 +165,14 @@ const FortuneDisplay: React.FC<{
                 </div>
             </div>
 
-            <div className="info-card fortune-result"> {/* 突出显示当日运势 */}
+            {/* 2. 今日能量校准结果 (含雷达图) */}
+            <div className="info-card fortune-result"> 
                 <h3>✨ 今日能量校准结果</h3>
                 
-                {/* 运势分数和失衡元素 */}
-                {/* 关键修改：使用 score-summary 类控制布局 */}
                 <div className="score-summary">
                     <div>
                         <p style={{ margin: 0, fontSize: '0.9em', color: '#6c757d' }}>综合运势评分:</p>
-                        <p style={{ fontSize: '28px', margin: '5px 0 0 0' }}> {/* 增大分数，更醒目 */}
+                        <p style={{ fontSize: '28px', margin: '5px 0 0 0' }}> 
                              <span className={scoreClassName}>{result.score}</span> / 100
                         </p>
                     </div>
@@ -192,9 +194,35 @@ const FortuneDisplay: React.FC<{
                 <RadarChart data={result.energyDifference} />
             </div>
 
+            {/* ======================================================== */}
+            {/* ✨ 3. [新位置] 塔罗灵性指引 (独立卡片)                   */}
+            {/* ======================================================== */}
+            {physicalRecommendation && (
+                <>
+                    <hr />
+                    <div className="info-card" style={{ 
+                        borderLeft: '4px solid #9c27b0', // 紫色边框，代表神秘/灵性
+                        backgroundColor: '#fdfbff',      // 极淡的紫色背景
+                        padding: '15px 20px'
+                    }}>
+                        <h3 style={{ color: '#6a1b9a', marginTop: 0, fontSize: '1.1em' }}>🔮 今日灵性指引</h3>
+                        <p style={{ 
+                            fontSize: '1.05em', 
+                            fontStyle: 'italic', 
+                            lineHeight: '1.6', 
+                            margin: '10px 0 0 0',
+                            color: '#4a4a4a',
+                            fontWeight: '500'
+                        }}>
+                            “{physicalRecommendation.tarotAdvice}”
+                        </p>
+                    </div>
+                </>
+            )}
+
             <hr /> 
             
-            {/* NFT 锚点推荐卡片 */}
+            {/* 4. NFT 锚点推荐 (Web3 建议) */}
             {recommendation && (
                 <div className="info-card" style={{ padding: '15px 0' }}>
                     <h3>🧭 推荐 NFT 锚点</h3>
@@ -228,7 +256,7 @@ const FortuneDisplay: React.FC<{
 
             <hr /> 
             
-            {/* 新增实体产品锚点推荐卡片 */}
+            {/* 5. 实体锚点与生活建议 (亚马逊带货) */}
             {physicalRecommendation && (
                 <div className="info-card" style={{ padding: '15px 0' }}>
                     <h3>🧘 实体锚点与生活建议</h3>
@@ -240,7 +268,7 @@ const FortuneDisplay: React.FC<{
                         
                         {/* 水晶推荐 */}
                         <div className="recommendation-box" style={{ padding: '8px', border: '1px solid #e9ecef', borderRadius: '4px' }}>
-                            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>🔮 水晶推荐</p>
+                            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>💎 能量水晶</p>
                             <a href={physicalRecommendation.crystal.buyLink} target="_blank" rel="noopener noreferrer" 
                                 style={{ display: 'block', color: '#007bff', textDecoration: 'none', fontSize: '0.9em' }}>
                                 购买: {physicalRecommendation.crystal.name}
@@ -249,23 +277,61 @@ const FortuneDisplay: React.FC<{
                         
                         {/* 生活方式推荐 */}
                         <div className="recommendation-box" style={{ padding: '8px', border: '1px solid #e9ecef', borderRadius: '4px' }}>
-                            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>🏠 生活周边</p>
+                            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>🏠 空间净化</p>
                             <a href={physicalRecommendation.lifestyle.buyLink} target="_blank" rel="noopener noreferrer" 
                                 style={{ display: 'block', color: '#007bff', textDecoration: 'none', fontSize: '0.9em' }}>
                                 购买: {physicalRecommendation.lifestyle.name}
                             </a>
                         </div>
                     </div>
-                    
-                    {/* 塔罗建议 */}
-                    <div style={{ padding: '10px', borderTop: '1px solid #e9ecef', marginTop: '10px' }}>
-                         <p style={{ margin: '0 0 0 0', fontWeight: 'bold', fontSize: '0.95em' }}>✨ 心灵指引 (塔罗)</p>
-                         <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#6c757d' }}>
-                             {physicalRecommendation.tarotAdvice}
-                         </p>
-                    </div>
+                    {/* (注意：原来的塔罗建议已从此处移除) */}
                 </div>
             )}
+
+            {/* ======================================================== */}
+            {/* 6. [新增] 你的专属符咒 NFT (OpenSea 导流)                 */}
+            {/* ======================================================== */}
+            <div className="info-card" style={{ 
+                marginTop: '15px',
+                border: '1px solid #b8860b', // 暗金色边框
+                backgroundColor: '#fffdf5',  // 暖色背景
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{
+                    position: 'absolute', top: 0, right: 0, 
+                    background: '#b8860b', color: '#fff', 
+                    fontSize: '0.6em', padding: '2px 6px',
+                    borderBottomLeftRadius: '4px'
+                }}>
+                    店主亲绘
+                </div>
+
+                <h3>🧧 专属赛博灵符 (NFT)</h3>
+                <p style={{ fontSize: '0.9em', marginBottom: '10px', color: '#555' }}>
+                    五行缺{FIVE_ELEMENT_NAMES_MAP[result.imbalanceElement]}？<br/>
+                    领取一枚在 Polygon 链上永久镌刻的灵符，获得数字世界的能量加持。
+                </p>
+                <a 
+                    href="https://opensea.io/collection/your-collection-name" /* ⚠️ 记得替换成你真实的 OpenSea 合集链接 */
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                        display: 'block',
+                        textAlign: 'center',
+                        backgroundColor: '#2c2c2c',
+                        color: '#d4af37',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        textDecoration: 'none',
+                        fontWeight: 'bold',
+                        fontSize: '0.95em',
+                        letterSpacing: '1px'
+                    }}
+                >
+                    去 OpenSea 请符 ➔
+                </a>
+            </div>
         </>
     );
 };
@@ -425,6 +491,22 @@ export const Popup: React.FC = () => {
                         currentInput={userSignatureInput || INITIAL_INPUT}
                         isLoading={isLoading}
                     />
+                    <div style={{ 
+                        marginTop: '20px', 
+                        borderTop: '1px solid #e0dcd0', 
+                        paddingTop: '10px', 
+                        textAlign: 'center', 
+                        fontSize: '0.7em', 
+                        color: '#999' 
+                    }}>
+                        <p>
+                            本工具仅供娱乐与参考。
+                            <br/>
+                            作为亚马逊联盟成员，我们可能会从符合条件的购买中获得收益。
+                            <br/>
+                            (As an Amazon Associate I earn from qualifying purchases.)
+                        </p>
+                    </div>
                 </>
             )}
         </div>
