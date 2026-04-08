@@ -162,6 +162,7 @@ export const Popup: React.FC = () => {
     const [talisman, setTalisman] = useState<TalismanRecommendation | null>(null);
     const [physicalRecommendation, setPhysicalRecommendation] = useState<PhysicalAnchorRecommendation | null>(null);
     const [detailExpanded, setDetailExpanded] = useState(false);
+    const [showCeremony, setShowCeremony] = useState(false);
 
     /** 统一应用运势结果（修复缓存加载时推荐项为空的问题） */
     const applyFortuneResult = useCallback((result: FortuneResult) => {
@@ -211,23 +212,42 @@ export const Popup: React.FC = () => {
 
     /** 用户提交出生时间 */
     const handleInputSubmit = useCallback(async (input: UserSignatureInput) => {
-        setIsLoading(true);
+        setShowCeremony(true);
         await chromeStorage.setUserSignatureInput(input);
         setUserSignatureInput(input);
 
         const signature = calculateUserSignature(input);
         await setStoredSignature(signature);
         setUserSignature(signature);
-        await calculateAndSetFortune(signature);
-        setIsLoading(false);
+
+        // 仪式感延迟 + 计算
+        await Promise.all([
+            calculateAndSetFortune(signature),
+            new Promise(r => setTimeout(r, 2000)),
+        ]);
+        setShowCeremony(false);
     }, [calculateAndSetFortune]);
 
     // --- 渲染 ---
 
+    // 校准仪式动画
+    if (showCeremony) {
+        return (
+            <div className="ceremony-screen">
+                <div className="ceremony-ring">
+                    {['金', '木', '水', '火', '土'].map((el, i) => (
+                        <span key={el} className="ceremony-el" style={{ animationDelay: `${i * 0.15}s` }}>{el}</span>
+                    ))}
+                </div>
+                <p className="ceremony-text">正在校准五行能量...</p>
+            </div>
+        );
+    }
+
     if (isLoading) {
         return (
             <div className="loading-screen">
-                <p>正在校准五行能量...</p>
+                <p>加载中...</p>
             </div>
         );
     }

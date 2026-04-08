@@ -92,6 +92,48 @@ h4 {
 }
 
 // ----------------------------------------------------
+// 校准仪式
+// ----------------------------------------------------
+.ceremony-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.ceremony-ring {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.ceremony-el {
+    font-size: 22px;
+    font-weight: bold;
+    opacity: 0.3;
+    animation: ceremonyPulse 1.2s ease-in-out infinite alternate;
+
+    &:nth-child(1) { color: $color-gold; }
+    &:nth-child(2) { color: $color-wood; }
+    &:nth-child(3) { color: $color-water; }
+    &:nth-child(4) { color: $color-fire; }
+    &:nth-child(5) { color: $color-earth; }
+}
+
+@keyframes ceremonyPulse {
+    0%   { opacity: 0.2; transform: scale(0.9); }
+    100% { opacity: 1;   transform: scale(1.15); }
+}
+
+.ceremony-text {
+    color: $gold-accent;
+    font-size: 14px;
+    letter-spacing: 2px;
+    animation: fadeInSlow 0.6s ease-out;
+}
+
+// ----------------------------------------------------
 // 欢迎页 (首次使用)
 // ----------------------------------------------------
 .welcome-screen {
@@ -134,7 +176,12 @@ h4 {
     width: 220px;
     border-radius: 8px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    animation: talismanReveal 0.7s ease-out;
 }
+
+.talisman-name  { animation: fadeInUp 0.5s ease-out 0.3s both; }
+.talisman-blessing { animation: fadeInUp 0.5s ease-out 0.45s both; }
+.talisman-subtitle { animation: fadeInUp 0.5s ease-out 0.6s both; }
 
 .talisman-score-badge {
     position: absolute;
@@ -484,4 +531,22 @@ button[type="submit"] {
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px solid $border-light;
+}
+
+// ----------------------------------------------------
+// 动画关键帧
+// ----------------------------------------------------
+@keyframes talismanReveal {
+    0%   { opacity: 0; transform: scale(0.85); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeInUp {
+    0%   { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInSlow {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
 }
