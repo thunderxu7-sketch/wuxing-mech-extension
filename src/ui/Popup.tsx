@@ -21,6 +21,7 @@ import {
     setDailyCache
 } from '../api/chromeStorage';
 import { RadarChart } from './components/RadarChart';
+import { generateShareImage } from './utils/generateShareImage';
 
 // --- 符图资源 ---
 import zhaocaiImg from '../assets/images/zhaocai.jpg';
@@ -343,6 +344,21 @@ export const Popup: React.FC = () => {
                         </a>
                     </div>
                 </div>
+            )}
+
+            {/* ====== 保存分享 ====== */}
+            {talisman && fortuneResult && physicalRecommendation && (
+                <button
+                    className="share-btn"
+                    onClick={() => generateShareImage({
+                        talisman,
+                        score: fortuneResult.score,
+                        tarotAdvice: physicalRecommendation.tarotAdvice,
+                        talismanImageSrc: TALISMAN_IMAGES[talisman.id],
+                    })}
+                >
+                    保存今日灵符卡片
+                </button>
             )}
 
             {/* ====== 重新校准 (折叠) ====== */}

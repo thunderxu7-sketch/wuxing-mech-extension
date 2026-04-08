@@ -428,6 +428,29 @@ button[type="submit"] {
 }
 
 // ----------------------------------------------------
+// 分享按钮
+// ----------------------------------------------------
+.share-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed $gold-accent;
+    border-radius: 6px;
+    background: transparent;
+    color: $gold-accent;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    margin: 0;
+
+    &:hover {
+        background: rgba($gold-accent, 0.08);
+        border-style: solid;
+    }
+}
+
+// ----------------------------------------------------
 // 重新校准 (折叠)
 // ----------------------------------------------------
 .recalibrate-section {
