@@ -13,6 +13,7 @@
   },
   "include": [
     "src/api/chromeStorage.ts",
+    "src/api/analytics.ts",
     "src/locales/types.ts",
     "src/types/solarlunar.d.ts",
     "src/utils/algorithm.ts",

@@ -1,4 +1,51 @@
-# React + TypeScript + Vite
+# WuXing Mech Extension
+
+## Analytics
+
+The extension now supports dual-write analytics:
+
+- Local stats remain available in storage for debugging.
+- Remote delivery is optional and can be enabled by setting an analytics endpoint.
+- Failed remote sends are queued locally and retried on later events.
+
+You can configure the remote collector from the extension console:
+
+```js
+await chrome.storage.local.set({
+  wuxing_analytics_config: {
+    enabled: true,
+    site: 'wuxing-extension',
+    endpoint: 'https://your-collector.example.com/events'
+  }
+})
+```
+
+The collector receives JSON events with:
+
+- `name`
+- `site`
+- `installId`
+- `sessionId`
+- `timestamp`
+- `day`
+- `properties`
+
+Current funnel events include:
+
+- `popup_open`
+- `first_open`
+- `return_visit`
+- `onboarding_view`
+- `birth_submit`
+- `fortune_generated`
+- `detail_expand`
+- `detail_collapse`
+- `product_refresh`
+- `product_click`
+- `share_save`
+- `locale_switch`
+
+## Legacy Template Notes
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

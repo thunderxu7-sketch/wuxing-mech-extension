@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as chromeStorage from '../api/chromeStorage';
 import type {
     UserSignatureInput,
@@ -146,10 +146,11 @@ export const Popup: React.FC = () => {
     const [physicalRecommendation, setPhysicalRecommendation] = useState<PhysicalAnchorRecommendation | null>(null);
     const [detailExpanded, setDetailExpanded] = useState(false);
     const [showCeremony, setShowCeremony] = useState(false);
+    const hasTrackedOnboardingView = useRef(false);
 
     /** 切换语言 */
     const switchLocale = useCallback(async (newLocale: Locale) => {
-        trackEvent('locale_switch');
+        void trackEvent('locale_switch', { locale: newLocale });
         setLocaleState(newLocale);
         setM(getMessages(newLocale));
         await chromeStorage.setLocale(newLocale);
@@ -163,24 +164,39 @@ export const Popup: React.FC = () => {
 
     /** 刷新推荐商品（从池中重新随机） */
     const refreshProducts = useCallback(() => {
-        trackEvent('product_refresh');
         if (fortuneResult) {
+            void trackEvent('product_refresh', {
+                locale,
+                imbalance_element: fortuneResult.imbalanceElement,
+            });
             setPhysicalRecommendation(getPhysicalAnchorRecommendation(fortuneResult, locale));
         }
     }, [fortuneResult, locale]);
 
     /** 统一应用运势结果 */
-    const applyFortuneResult = useCallback((result: FortuneResult, loc: Locale) => {
+    const applyFortuneResult = useCallback((
+        result: FortuneResult,
+        loc: Locale,
+        source: 'cache' | 'fresh',
+    ) => {
         setFortuneResult(result);
-        setTalisman(getDailyTalisman(result, loc));
+        const nextTalisman = getDailyTalisman(result, loc);
+        setTalisman(nextTalisman);
         setPhysicalRecommendation(getPhysicalAnchorRecommendation(result, loc));
+        void trackEvent('fortune_generated', {
+            locale: loc,
+            score: result.score,
+            imbalance_element: result.imbalanceElement,
+            talisman_id: nextTalisman.id,
+            source,
+        });
     }, []);
 
     /** 计算或从缓存加载今日运势 */
     const calculateAndSetFortune = useCallback(async (signature: UserSignature, loc: Locale) => {
         const cachedResult = await getDailyCache(signature);
         if (cachedResult) {
-            applyFortuneResult(cachedResult.data, loc);
+            applyFortuneResult(cachedResult.data, loc, 'cache');
             return;
         }
 
@@ -188,19 +204,17 @@ export const Popup: React.FC = () => {
         const V_Day = calculateDailyCosmos(today);
         const result = calculateFortune(signature, V_Day);
         await setDailyCache(signature, result);
-        applyFortuneResult(result, loc);
+        applyFortuneResult(result, loc, 'fresh');
     }, [applyFortuneResult]);
 
     // 初始加载
     useEffect(() => {
         async function loadData() {
-            // Track daily active user
-            trackDAU();
-
             // 加载语言偏好
             const savedLocale = await chromeStorage.getLocale();
             setLocaleState(savedLocale);
             setM(getMessages(savedLocale));
+            await trackDAU({ locale: savedLocale });
 
             // 非扩展环境 (本地开发) 使用模拟数据
             if (typeof chrome === 'undefined' || !chrome.storage) {
@@ -223,9 +237,17 @@ export const Popup: React.FC = () => {
         loadData();
     }, [calculateAndSetFortune]);
 
+    useEffect(() => {
+        if (!isLoading && !userSignature && !hasTrackedOnboardingView.current) {
+            hasTrackedOnboardingView.current = true;
+            void trackEvent('onboarding_view', { locale });
+        }
+    }, [isLoading, locale, userSignature]);
+
     /** 用户提交出生时间 */
     const handleInputSubmit = useCallback(async (input: UserSignatureInput) => {
         setShowCeremony(true);
+        void trackEvent('birth_submit', { locale });
         await chromeStorage.setUserSignatureInput(input);
         setUserSignatureInput(input);
 
@@ -339,7 +361,14 @@ export const Popup: React.FC = () => {
                 <div className="detail-section">
                     <button
                         className="detail-toggle"
-                        onClick={() => setDetailExpanded(!detailExpanded)}
+                        onClick={() => {
+                            const nextExpanded = !detailExpanded;
+                            setDetailExpanded(nextExpanded);
+                            void trackEvent(nextExpanded ? 'detail_expand' : 'detail_collapse', {
+                                locale,
+                                score: fortuneResult.score,
+                            });
+                        }}
                     >
                         {detailExpanded ? m.talisman.detailCollapse : m.talisman.detailExpand}
                     </button>
@@ -383,7 +412,19 @@ export const Popup: React.FC = () => {
                     </div>
                     <div className="product-grid">
                         {physicalRecommendation.products.map((p, i) => (
-                            <a key={i} href={p.buyLink} target="_blank" rel="noopener noreferrer" className="product-card" onClick={() => trackEvent('product_click')}>
+                            <a
+                                key={i}
+                                href={p.buyLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="product-card"
+                                onClick={() => void trackEvent('product_click', {
+                                    locale,
+                                    product_name: p.name,
+                                    product_label: p.label,
+                                    talisman_id: talisman?.id ?? null,
+                                })}
+                            >
                                 <span className="product-icon">{p.icon}</span>
                                 <span className="product-label">{p.label}</span>
                                 <span className="product-name">{p.name}</span>
@@ -397,13 +438,20 @@ export const Popup: React.FC = () => {
             {talisman && fortuneResult && physicalRecommendation && (
                 <button
                     className="share-btn"
-                    onClick={() => { trackEvent('share_save'); generateShareImage({
-                        talisman,
-                        score: fortuneResult.score,
-                        tarotAdvice: physicalRecommendation.tarotAdvice,
-                        talismanImageSrc: TALISMAN_IMAGES[talisman.id],
-                        locale,
-                    }); }}
+                    onClick={async () => {
+                        await generateShareImage({
+                            talisman,
+                            score: fortuneResult.score,
+                            tarotAdvice: physicalRecommendation.tarotAdvice,
+                            talismanImageSrc: TALISMAN_IMAGES[talisman.id],
+                            locale,
+                        });
+                        await trackEvent('share_save', {
+                            locale,
+                            score: fortuneResult.score,
+                            talisman_id: talisman.id,
+                        });
+                    }}
                 >
                     {m.share.saveBtn}
                 </button>
