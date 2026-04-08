@@ -56,8 +56,7 @@ export const en: LocaleMessages = {
     },
     products: {
         title: 'Recommended Items',
-        crystalLabel: 'Energy Crystal',
-        lifestyleLabel: 'Space Purifier',
+        refresh: 'Refresh',
     },
     share: {
         saveBtn: 'Save Talisman Card',

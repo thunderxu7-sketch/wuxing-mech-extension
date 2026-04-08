@@ -21,6 +21,7 @@ import {
 } from '../api/chromeStorage';
 import { RadarChart } from './components/RadarChart';
 import { generateShareImage } from './utils/generateShareImage';
+import { trackDAU, trackEvent } from '../api/analytics';
 import type { Locale, LocaleMessages } from '../locales/types';
 import { getMessages } from '../locales';
 
@@ -149,6 +150,7 @@ export const Popup: React.FC = () => {
 
     /** 切换语言 */
     const switchLocale = useCallback(async (newLocale: Locale) => {
+        trackEvent('locale_switch');
         setLocaleState(newLocale);
         setM(getMessages(newLocale));
         await chromeStorage.setLocale(newLocale);
@@ -159,6 +161,14 @@ export const Popup: React.FC = () => {
             setPhysicalRecommendation(getPhysicalAnchorRecommendation(fortuneResult, newLocale));
         }
     }, [fortuneResult]);
+
+    /** 刷新推荐商品（从池中重新随机） */
+    const refreshProducts = useCallback(() => {
+        trackEvent('product_refresh');
+        if (fortuneResult) {
+            setPhysicalRecommendation(getPhysicalAnchorRecommendation(fortuneResult, locale));
+        }
+    }, [fortuneResult, locale]);
 
     /** 统一应用运势结果 */
     const applyFortuneResult = useCallback((result: FortuneResult, loc: Locale) => {
@@ -185,6 +195,9 @@ export const Popup: React.FC = () => {
     // 初始加载
     useEffect(() => {
         async function loadData() {
+            // Track daily active user
+            trackDAU();
+
             // 加载语言偏好
             const savedLocale = await chromeStorage.getLocale();
             setLocaleState(savedLocale);
@@ -365,18 +378,18 @@ export const Popup: React.FC = () => {
             {/* ====== 推荐好物 ====== */}
             {physicalRecommendation && (
                 <div className="products-section">
-                    <h4 className="section-title">{m.products.title}</h4>
+                    <div className="products-header">
+                        <h4 className="section-title">{m.products.title}</h4>
+                        <button className="refresh-btn" onClick={refreshProducts}>{m.products.refresh}</button>
+                    </div>
                     <div className="product-grid">
-                        <a href={physicalRecommendation.crystal.buyLink} target="_blank" rel="noopener noreferrer" className="product-card">
-                            <span className="product-icon">💎</span>
-                            <span className="product-label">{m.products.crystalLabel}</span>
-                            <span className="product-name">{physicalRecommendation.crystal.name}</span>
-                        </a>
-                        <a href={physicalRecommendation.lifestyle.buyLink} target="_blank" rel="noopener noreferrer" className="product-card">
-                            <span className="product-icon">🏠</span>
-                            <span className="product-label">{m.products.lifestyleLabel}</span>
-                            <span className="product-name">{physicalRecommendation.lifestyle.name}</span>
-                        </a>
+                        {physicalRecommendation.products.map((p, i) => (
+                            <a key={i} href={p.buyLink} target="_blank" rel="noopener noreferrer" className="product-card" onClick={() => trackEvent('product_click')}>
+                                <span className="product-icon">{p.icon}</span>
+                                <span className="product-label">{p.label}</span>
+                                <span className="product-name">{p.name}</span>
+                            </a>
+                        ))}
                     </div>
                 </div>
             )}
@@ -385,13 +398,13 @@ export const Popup: React.FC = () => {
             {talisman && fortuneResult && physicalRecommendation && (
                 <button
                     className="share-btn"
-                    onClick={() => generateShareImage({
+                    onClick={() => { trackEvent('share_save'); generateShareImage({
                         talisman,
                         score: fortuneResult.score,
                         tarotAdvice: physicalRecommendation.tarotAdvice,
                         talismanImageSrc: TALISMAN_IMAGES[talisman.id],
                         locale,
-                    })}
+                    }); }}
                 >
                     {m.share.saveBtn}
                 </button>

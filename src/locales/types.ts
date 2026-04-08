@@ -37,8 +37,7 @@ export interface LocaleMessages {
     };
     products: {
         title: string;
-        crystalLabel: string;
-        lifestyleLabel: string;
+        refresh: string;
     };
     share: {
         saveBtn: string;

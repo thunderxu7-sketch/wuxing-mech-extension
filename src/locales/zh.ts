@@ -56,8 +56,7 @@ export const zh: LocaleMessages = {
     },
     products: {
         title: '推荐好物',
-        crystalLabel: '能量水晶',
-        lifestyleLabel: '空间净化',
+        refresh: '换一批',
     },
     share: {
         saveBtn: '保存今日灵符卡片',

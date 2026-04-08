@@ -57,33 +57,17 @@ export interface NftAnchorRecommendation {
     keywords: string[];
 }
 
-/**
- * @description 实体产品/生活方式锚点推荐的结构定义
- */
+export interface ProductItem {
+    name: string;
+    buyLink: string;
+    icon: string;
+    label: string;
+}
+
 export interface PhysicalAnchorRecommendation {
-    /**
-     * @description 主要的颜色/元素主题
-     */
     themeColor: string;
-    /**
-     * @description 水晶/宝石推荐
-     */
-    crystal: {
-        name: string;
-        // 这是一个占位符，实际中会是联盟链接或产品ID
-        buyLink: string; 
-    };
-    /**
-     * @description 塔罗牌/心灵指引建议
-     */
     tarotAdvice: string;
-    /**
-     * @description 生活方式/周边产品推荐
-     */
-    lifestyle: {
-        name: string;
-        buyLink: string;
-    };
+    products: ProductItem[];
 }
 
 /**
@@ -431,119 +415,202 @@ function generateAffiliateLink(keyword: string, locale: Locale): string {
     return `https://s.taobao.com/search?q=${query}`;
 }
 
-// --- 商品多语言数据 ---
+// --- 商品池 + 塔罗多语言数据 ---
 
-interface ProductSet {
+interface RawProduct { name: string; keyword: string; icon: string; label: string; }
+
+interface ElementMeta {
     themeColor: string;
-    crystal: { name: string; keyword: string };
     tarotAdvice: string;
-    lifestyle: { name: string; keyword: string };
+    products: RawProduct[];
 }
 
-const PRODUCT_DATA: Record<string, Record<Locale, ProductSet>> = {
+const ELEMENT_DATA: Record<string, Record<Locale, ElementMeta>> = {
     gold: {
         zh: {
             themeColor: '红 / 黑 (火克金，水泻金)',
-            crystal: { name: '黑曜石手链', keyword: '黑曜石手链' },
             tarotAdvice: '审视你的『宝剑』牌组，寻找行动与克制之间的平衡。',
-            lifestyle: { name: '红色香薰蜡烛', keyword: '红色香薰蜡烛' },
+            products: [
+                { name: '黑曜石手链', keyword: '黑曜石手链', icon: '💎', label: '能量水晶' },
+                { name: '红色香薰蜡烛', keyword: '红色香薰蜡烛', icon: '🕯️', label: '香薰' },
+                { name: '红玛瑙手串', keyword: '红玛瑙手串 开运', icon: '📿', label: '开运饰品' },
+                { name: '檀香线香', keyword: '檀香线香 天然', icon: '🪔', label: '空间净化' },
+                { name: '石榴石吊坠', keyword: '石榴石吊坠', icon: '💍', label: '能量饰品' },
+                { name: '红色丝绸眼罩', keyword: '真丝眼罩 红色', icon: '😴', label: '助眠' },
+            ],
         },
         en: {
             themeColor: 'Red / Black (Fire controls Metal)',
-            crystal: { name: 'Black Obsidian Bracelet', keyword: 'Black Obsidian Bracelet' },
             tarotAdvice: 'Examine your Swords cards — find the balance between action and restraint.',
-            lifestyle: { name: 'Red Aromatherapy Candle', keyword: 'Red Aromatherapy Candle' },
+            products: [
+                { name: 'Black Obsidian Bracelet', keyword: 'Black Obsidian Bracelet', icon: '💎', label: 'Crystal' },
+                { name: 'Red Aromatherapy Candle', keyword: 'Red Aromatherapy Candle', icon: '🕯️', label: 'Aromatherapy' },
+                { name: 'Red Agate Bracelet', keyword: 'Red Agate Bracelet', icon: '📿', label: 'Jewelry' },
+                { name: 'Sandalwood Incense', keyword: 'Sandalwood Incense Sticks', icon: '🪔', label: 'Purifier' },
+                { name: 'Garnet Pendant', keyword: 'Garnet Pendant Necklace', icon: '💍', label: 'Jewelry' },
+                { name: 'Silk Sleep Mask', keyword: 'Silk Eye Mask Red', icon: '😴', label: 'Sleep' },
+            ],
         },
     },
     wood: {
         zh: {
             themeColor: '白 / 红 (金克木，火泻木)',
-            crystal: { name: '白水晶簇摆件', keyword: '白水晶簇摆件' },
             tarotAdvice: '关注『权杖』牌组的能量，将生发之力转化为具体行动。',
-            lifestyle: { name: '艺术画册', keyword: '艺术画册 精装' },
+            products: [
+                { name: '白水晶簇摆件', keyword: '白水晶簇摆件', icon: '💎', label: '能量水晶' },
+                { name: '艺术画册', keyword: '艺术画册 精装', icon: '📚', label: '文艺' },
+                { name: '金属风铃', keyword: '金属风铃 日式', icon: '🔔', label: '家居' },
+                { name: '银饰手链', keyword: '纯银手链 简约', icon: '💍', label: '饰品' },
+                { name: '白茶礼盒', keyword: '白茶礼盒 福鼎', icon: '🍵', label: '茶道' },
+                { name: '陶瓷香薰炉', keyword: '陶瓷香薰炉 复古', icon: '🏺', label: '香薰' },
+            ],
         },
         en: {
             themeColor: 'White / Red (Metal controls Wood)',
-            crystal: { name: 'Clear Quartz Cluster', keyword: 'Clear Quartz Cluster' },
             tarotAdvice: 'Focus on your Wands — channel growth energy into concrete action.',
-            lifestyle: { name: 'Fine Art Book', keyword: 'Coffee Table Art Book' },
+            products: [
+                { name: 'Clear Quartz Cluster', keyword: 'Clear Quartz Cluster', icon: '💎', label: 'Crystal' },
+                { name: 'Fine Art Book', keyword: 'Coffee Table Art Book', icon: '📚', label: 'Art' },
+                { name: 'Metal Wind Chime', keyword: 'Metal Wind Chime', icon: '🔔', label: 'Home' },
+                { name: 'Silver Bracelet', keyword: 'Sterling Silver Bracelet', icon: '💍', label: 'Jewelry' },
+                { name: 'White Tea Gift Set', keyword: 'White Tea Gift Set', icon: '🍵', label: 'Tea' },
+                { name: 'Ceramic Incense Burner', keyword: 'Ceramic Incense Burner', icon: '🏺', label: 'Decor' },
+            ],
         },
     },
     water: {
         zh: {
             themeColor: '黄 / 紫 (土克水，金生水)',
-            crystal: { name: '黄水晶摆件', keyword: '黄水晶摆件 招财' },
             tarotAdvice: '冥想与『五芒星』牌组，让财务和现实基础更加稳固。',
-            lifestyle: { name: '星座周边礼物', keyword: '星座礼物 摩羯座 金牛座' },
+            products: [
+                { name: '黄水晶摆件', keyword: '黄水晶摆件 招财', icon: '💎', label: '能量水晶' },
+                { name: '星座周边礼物', keyword: '星座礼物 摩羯座 金牛座', icon: '♑', label: '星座' },
+                { name: '虎眼石手链', keyword: '虎眼石手链', icon: '📿', label: '能量饰品' },
+                { name: '沉香手串', keyword: '沉香手串 天然', icon: '📿', label: '养生' },
+                { name: '黄铜摆件', keyword: '黄铜摆件 招财', icon: '🪙', label: '风水' },
+                { name: '普洱茶饼', keyword: '普洱茶饼 礼盒', icon: '🍵', label: '茶道' },
+            ],
         },
         en: {
             themeColor: 'Yellow / Purple (Earth controls Water)',
-            crystal: { name: 'Citrine Crystal', keyword: 'Citrine Crystal Decor' },
             tarotAdvice: 'Meditate on your Pentacles — strengthen your material foundations.',
-            lifestyle: { name: 'Zodiac Gifts', keyword: 'Capricorn Taurus Virgo Gifts' },
+            products: [
+                { name: 'Citrine Crystal', keyword: 'Citrine Crystal Decor', icon: '💎', label: 'Crystal' },
+                { name: 'Zodiac Gifts', keyword: 'Zodiac Sign Gift Set', icon: '♑', label: 'Zodiac' },
+                { name: 'Tiger Eye Bracelet', keyword: 'Tiger Eye Stone Bracelet', icon: '📿', label: 'Jewelry' },
+                { name: 'Agarwood Bracelet', keyword: 'Agarwood Bead Bracelet', icon: '📿', label: 'Wellness' },
+                { name: 'Brass Decor', keyword: 'Brass Feng Shui Decor', icon: '🪙', label: 'Feng Shui' },
+                { name: 'Pu-erh Tea Cake', keyword: 'Pu erh Tea Gift', icon: '🍵', label: 'Tea' },
+            ],
         },
     },
     fire: {
         zh: {
             themeColor: '蓝 / 绿 (水克火，木生火)',
-            crystal: { name: '青金石吊坠', keyword: '青金石吊坠' },
             tarotAdvice: '多加解读『圣杯』牌组，关注内心感受与情感交流，而非外部冲突。',
-            lifestyle: { name: '蓝色陶瓷茶具', keyword: '蓝色陶瓷茶具套装' },
+            products: [
+                { name: '青金石吊坠', keyword: '青金石吊坠', icon: '💎', label: '能量水晶' },
+                { name: '蓝色陶瓷茶具', keyword: '蓝色陶瓷茶具套装', icon: '🍵', label: '茶道' },
+                { name: '海蓝宝手链', keyword: '海蓝宝手链', icon: '📿', label: '能量饰品' },
+                { name: '薰衣草精油', keyword: '薰衣草精油 天然', icon: '💧', label: '舒缓' },
+                { name: '冥想坐垫', keyword: '冥想坐垫 禅修', icon: '🧘', label: '冥想' },
+                { name: '绿植盆栽', keyword: '水培绿植 桌面', icon: '🌿', label: '绿植' },
+            ],
         },
         en: {
             themeColor: 'Blue / Green (Water controls Fire)',
-            crystal: { name: 'Lapis Lazuli Pendant', keyword: 'Lapis Lazuli Pendant' },
             tarotAdvice: 'Read your Cups — focus on inner feelings and connection, not conflict.',
-            lifestyle: { name: 'Blue Ceramic Tea Set', keyword: 'Blue Ceramic Tea Set' },
+            products: [
+                { name: 'Lapis Lazuli Pendant', keyword: 'Lapis Lazuli Pendant', icon: '💎', label: 'Crystal' },
+                { name: 'Blue Ceramic Tea Set', keyword: 'Blue Ceramic Tea Set', icon: '🍵', label: 'Tea' },
+                { name: 'Aquamarine Bracelet', keyword: 'Aquamarine Bracelet', icon: '📿', label: 'Jewelry' },
+                { name: 'Lavender Essential Oil', keyword: 'Lavender Essential Oil', icon: '💧', label: 'Wellness' },
+                { name: 'Meditation Cushion', keyword: 'Meditation Zafu Cushion', icon: '🧘', label: 'Meditation' },
+                { name: 'Desktop Plant', keyword: 'Desktop Water Plant', icon: '🌿', label: 'Plant' },
+            ],
         },
     },
     earth: {
         zh: {
             themeColor: '绿 / 白 (木克土，金泻土)',
-            crystal: { name: '孔雀石手链', keyword: '孔雀石手链' },
             tarotAdvice: '通过『权杖』和『愚人』牌，鼓励自己打破现状，迎接改变。',
-            lifestyle: { name: '室内绿植盆栽', keyword: '室内盆栽 绿植 桌面' },
+            products: [
+                { name: '孔雀石手链', keyword: '孔雀石手链', icon: '💎', label: '能量水晶' },
+                { name: '室内绿植盆栽', keyword: '室内盆栽 绿植 桌面', icon: '🌿', label: '绿植' },
+                { name: '绿幽灵水晶', keyword: '绿幽灵水晶 手链', icon: '📿', label: '能量饰品' },
+                { name: '抹茶礼盒', keyword: '抹茶礼盒 日式', icon: '🍵', label: '茶道' },
+                { name: '竹制香插', keyword: '竹制香插 线香座', icon: '🎋', label: '香道' },
+                { name: '翡翠平安扣', keyword: '翡翠平安扣 吊坠', icon: '🧿', label: '平安' },
+            ],
         },
         en: {
             themeColor: 'Green / White (Wood controls Earth)',
-            crystal: { name: 'Malachite Bracelet', keyword: 'Malachite Bracelet' },
             tarotAdvice: 'Draw from the Wands and the Fool — break free and embrace change.',
-            lifestyle: { name: 'Indoor Bonsai Plant', keyword: 'Indoor Bonsai Tree' },
+            products: [
+                { name: 'Malachite Bracelet', keyword: 'Malachite Bracelet', icon: '💎', label: 'Crystal' },
+                { name: 'Indoor Bonsai Plant', keyword: 'Indoor Bonsai Tree', icon: '🌿', label: 'Plant' },
+                { name: 'Green Phantom Quartz', keyword: 'Green Phantom Quartz Bracelet', icon: '📿', label: 'Crystal' },
+                { name: 'Matcha Gift Set', keyword: 'Matcha Tea Gift Set', icon: '🍵', label: 'Tea' },
+                { name: 'Bamboo Incense Holder', keyword: 'Bamboo Incense Holder', icon: '🎋', label: 'Decor' },
+                { name: 'Jade Pendant', keyword: 'Jade Donut Pendant', icon: '🧿', label: 'Jewelry' },
+            ],
         },
     },
     default: {
         zh: {
             themeColor: '黄 / 金',
-            crystal: { name: '白水晶柱', keyword: '白水晶柱 天然' },
             tarotAdvice: '当前能量平衡，保持警觉，抽一张大阿卡那牌作为指引。',
-            lifestyle: { name: '护肤套装礼盒', keyword: '护肤套装 礼盒' },
+            products: [
+                { name: '白水晶柱', keyword: '白水晶柱 天然', icon: '💎', label: '能量水晶' },
+                { name: '护肤套装礼盒', keyword: '护肤套装 礼盒', icon: '🧴', label: '护肤' },
+                { name: '紫水晶洞', keyword: '紫水晶洞 摆件', icon: '💎', label: '摆件' },
+                { name: '手工皂礼盒', keyword: '手工皂 天然 礼盒', icon: '🧼', label: '洗护' },
+                { name: '龙泉青瓷杯', keyword: '龙泉青瓷杯', icon: '🍵', label: '茶道' },
+                { name: '天然蜂蜡蜡烛', keyword: '天然蜂蜡蜡烛', icon: '🕯️', label: '香薰' },
+            ],
         },
         en: {
             themeColor: 'Yellow / Gold',
-            crystal: { name: 'Clear Quartz Point', keyword: 'Clear Quartz Point' },
             tarotAdvice: 'Energy is balanced — stay alert and draw a Major Arcana for guidance.',
-            lifestyle: { name: 'Skincare Gift Set', keyword: 'Skincare Gift Set' },
+            products: [
+                { name: 'Clear Quartz Point', keyword: 'Clear Quartz Point', icon: '💎', label: 'Crystal' },
+                { name: 'Skincare Gift Set', keyword: 'Skincare Gift Set', icon: '🧴', label: 'Skincare' },
+                { name: 'Amethyst Geode', keyword: 'Amethyst Geode', icon: '💎', label: 'Crystal' },
+                { name: 'Handmade Soap Set', keyword: 'Natural Handmade Soap Set', icon: '🧼', label: 'Bath' },
+                { name: 'Celadon Tea Cup', keyword: 'Celadon Tea Cup', icon: '🍵', label: 'Tea' },
+                { name: 'Beeswax Candle', keyword: 'Natural Beeswax Candle', icon: '🕯️', label: 'Candle' },
+            ],
         },
     },
 };
 
+/** 从数组中随机选取 count 个元素 */
+function pickRandom<T>(arr: T[], count: number): T[] {
+    const shuffled = [...arr].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(count, arr.length));
+}
+
 /**
- * @description 根据运势结果（失衡元素）生成实体产品和生活方式推荐。
+ * @description 根据运势结果生成实体产品推荐（从商品池中随机选取）。
+ * @param count 返回的商品数量，默认 3
  */
-export function getPhysicalAnchorRecommendation(result: FortuneResult, locale: Locale = 'zh'): PhysicalAnchorRecommendation {
-    const key = PRODUCT_DATA[result.imbalanceElement] ? result.imbalanceElement : 'default';
-    const data = PRODUCT_DATA[key][locale];
+export function getPhysicalAnchorRecommendation(
+    result: FortuneResult,
+    locale: Locale = 'zh',
+    count: number = 3,
+): PhysicalAnchorRecommendation {
+    const key = ELEMENT_DATA[result.imbalanceElement] ? result.imbalanceElement : 'default';
+    const data = ELEMENT_DATA[key][locale];
+    const selected = pickRandom(data.products, count);
 
     return {
         themeColor: data.themeColor,
-        crystal: {
-            name: data.crystal.name,
-            buyLink: generateAffiliateLink(data.crystal.keyword, locale),
-        },
         tarotAdvice: data.tarotAdvice,
-        lifestyle: {
-            name: data.lifestyle.name,
-            buyLink: generateAffiliateLink(data.lifestyle.keyword, locale),
-        },
+        products: selected.map(p => ({
+            name: p.name,
+            buyLink: generateAffiliateLink(p.keyword, locale),
+            icon: p.icon,
+            label: p.label,
+        })),
     };
 }
