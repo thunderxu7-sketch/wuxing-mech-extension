@@ -1,29 +1,48 @@
 import html2canvas from 'html2canvas';
 import type { TalismanRecommendation } from '../../utils/algorithm';
+import type { Locale } from '../../locales/types';
 
 interface ShareCardParams {
     talisman: TalismanRecommendation;
     score: number;
     tarotAdvice: string;
     talismanImageSrc: string;
+    locale: Locale;
+}
+
+const TITLES: Record<Locale, string> = {
+    zh: '五行校准',
+    en: 'WuXing Calibrate',
+};
+
+const BRAND_LINES: Record<Locale, string> = {
+    zh: '五行校准 · 每日灵符',
+    en: 'WuXing Calibrate · Daily Talisman',
+};
+
+function formatDate(locale: Locale): string {
+    const today = new Date();
+    if (locale === 'zh') {
+        return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+    }
+    return today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 export async function generateShareImage(params: ShareCardParams): Promise<void> {
-    const { talisman, score, tarotAdvice, talismanImageSrc } = params;
+    const { talisman, score, tarotAdvice, talismanImageSrc, locale } = params;
 
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
-
+    const dateStr = formatDate(locale);
+    const title = TITLES[locale];
+    const brandLine = BRAND_LINES[locale];
     const scoreColor = score >= 70 ? '#28a745' : score >= 50 ? '#d4a017' : '#dc3545';
 
-    // Build card DOM
     const card = document.createElement('div');
     card.style.cssText = `
         width: 360px;
         padding: 28px 24px 20px;
         box-sizing: border-box;
         background: linear-gradient(180deg, #fcfbf7 0%, #f5f0e8 100%);
-        font-family: 'Songti SC', 'Noto Serif SC', 'SimSun', 'Times New Roman', serif;
+        font-family: 'Songti SC', 'Noto Serif SC', 'Georgia', 'Times New Roman', serif;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -35,7 +54,7 @@ export async function generateShareImage(params: ShareCardParams): Promise<void>
 
     card.innerHTML = `
         <div style="font-size: 11px; color: #999; letter-spacing: 1px;">${dateStr}</div>
-        <div style="font-size: 22px; color: #b8860b; font-weight: bold; letter-spacing: 4px; margin: 8px 0 18px;">五行校准</div>
+        <div style="font-size: 22px; color: #b8860b; font-weight: bold; letter-spacing: 4px; margin: 8px 0 18px;">${title}</div>
         <img
             src="${talismanImageSrc}"
             style="width: 190px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);"
@@ -69,13 +88,12 @@ export async function generateShareImage(params: ShareCardParams): Promise<void>
             width: 100%;
             text-align: center;
         ">
-            <div style="font-size: 10px; color: #b8860b; letter-spacing: 2px;">五行校准 · 每日灵符</div>
+            <div style="font-size: 10px; color: #b8860b; letter-spacing: 2px;">${brandLine}</div>
         </div>
     `;
 
     document.body.appendChild(card);
 
-    // Wait for talisman image to load
     const img = card.querySelector('img');
     if (img && !img.complete) {
         await new Promise<void>((resolve) => {
@@ -91,8 +109,9 @@ export async function generateShareImage(params: ShareCardParams): Promise<void>
             useCORS: true,
         });
 
+        const filePrefix = locale === 'zh' ? `五行校准_${talisman.name}` : `WuXing_${talisman.id}`;
         const link = document.createElement('a');
-        link.download = `五行校准_${talisman.name}_${dateStr}.png`;
+        link.download = `${filePrefix}_${dateStr}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     } finally {

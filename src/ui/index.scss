@@ -52,6 +52,50 @@ body {
 }
 
 // ----------------------------------------------------
+// 顶部栏 & 语言切换
+// ----------------------------------------------------
+.top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.lang-toggle {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: 1px solid $border-warm;
+    border-radius: 4px;
+    color: $text-secondary;
+    font-size: 11px;
+    font-family: inherit;
+    padding: 2px 8px;
+    cursor: pointer;
+    width: auto;
+    margin: 0;
+    line-height: 1.4;
+    letter-spacing: 0;
+    transition: all 0.2s;
+
+    &:hover {
+        color: $gold-accent;
+        border-color: $gold-accent;
+        background: none;
+    }
+}
+
+// welcome-screen 中的 lang-toggle 置于右上角
+.welcome-screen .lang-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: none;
+}
+
+// ----------------------------------------------------
 // 通用
 // ----------------------------------------------------
 h2, .app-title {
@@ -142,6 +186,7 @@ h4 {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    position: relative;
 }
 
 .welcome-talisman {

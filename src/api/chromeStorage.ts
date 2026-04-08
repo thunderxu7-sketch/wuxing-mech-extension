@@ -1,9 +1,11 @@
 // src/api/chromeStorage.ts
 import type { UserSignature, UserSignatureInput, FortuneResult } from '../utils/algorithm';
+import type { Locale } from '../locales/types';
 
 const USER_SIGNATURE_KEY = 'user_signature';
 const DAILY_CACHE_KEY = 'daily_fortune_cache';
 const USER_INPUT_KEY = 'user_input_birth';
+const LOCALE_KEY = 'user_locale';
 
 // 检查是否在 Chrome 扩展环境中的辅助函数
 const isExtensionEnv = typeof chrome !== 'undefined' && chrome.storage;
@@ -115,4 +117,26 @@ export async function setUserSignatureInput(input: UserSignatureInput): Promise<
     }
     await chrome.storage.local.set({ [USER_INPUT_KEY]: input });
     return Promise.resolve();
+}
+
+/**
+ * 获取用户语言偏好。
+ */
+export async function getLocale(): Promise<Locale> {
+    if (!isExtensionEnv) {
+        return (getLocal(LOCALE_KEY) as Locale) || 'zh';
+    }
+    const data = await chrome.storage.local.get(LOCALE_KEY);
+    return data[LOCALE_KEY] || 'zh';
+}
+
+/**
+ * 设置用户语言偏好。
+ */
+export async function setLocale(locale: Locale): Promise<void> {
+    if (!isExtensionEnv) {
+        setLocal(LOCALE_KEY, locale);
+        return;
+    }
+    await chrome.storage.local.set({ [LOCALE_KEY]: locale });
 }

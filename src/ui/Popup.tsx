@@ -4,7 +4,6 @@ import type {
     UserSignatureInput,
     UserSignature,
     FortuneResult,
-    FiveElementVector,
     PhysicalAnchorRecommendation,
     TalismanRecommendation
 } from '../utils/algorithm';
@@ -22,6 +21,8 @@ import {
 } from '../api/chromeStorage';
 import { RadarChart } from './components/RadarChart';
 import { generateShareImage } from './utils/generateShareImage';
+import type { Locale, LocaleMessages } from '../locales/types';
+import { getMessages } from '../locales';
 
 // --- 符图资源 ---
 import zhaocaiImg from '../assets/images/zhaocai.jpg';
@@ -44,29 +45,8 @@ const TALISMAN_IMAGES: Record<string, string> = {
     fugui: fuguiImg,
 };
 
-// --- 常量 ---
-
 const INITIAL_INPUT: UserSignatureInput = {
     year: 1990, month: 1, day: 1, hour: 12,
-};
-
-const SHICHEN_OPTIONS = [
-    { label: '子时 (23:00-01:00)', value: 0 },
-    { label: '丑时 (01:00-03:00)', value: 2 },
-    { label: '寅时 (03:00-05:00)', value: 4 },
-    { label: '卯时 (05:00-07:00)', value: 6 },
-    { label: '辰时 (07:00-09:00)', value: 8 },
-    { label: '巳时 (09:00-11:00)', value: 10 },
-    { label: '午时 (11:00-13:00)', value: 12 },
-    { label: '未时 (13:00-15:00)', value: 14 },
-    { label: '申时 (15:00-17:00)', value: 16 },
-    { label: '酉时 (17:00-19:00)', value: 18 },
-    { label: '戌时 (19:00-21:00)', value: 20 },
-    { label: '亥时 (21:00-23:00)', value: 22 },
-];
-
-const FIVE_ELEMENT_NAMES: Record<keyof FiveElementVector, string> = {
-    gold: '金', wood: '木', water: '水', fire: '火', earth: '土',
 };
 
 /** 将 0-23 小时映射到时辰选择器的偶数值 */
@@ -83,7 +63,8 @@ const BirthInputForm: React.FC<{
     onSubmit: (input: UserSignatureInput) => void;
     currentInput: UserSignatureInput;
     isLoading: boolean;
-}> = ({ onSubmit, currentInput, isLoading }) => {
+    m: LocaleMessages;
+}> = ({ onSubmit, currentInput, isLoading, m }) => {
     const [input, setInput] = useState({
         year: currentInput.year.toString(),
         month: currentInput.month.toString(),
@@ -110,7 +91,7 @@ const BirthInputForm: React.FC<{
         const month = parseInt(input.month, 10);
         const day = parseInt(input.day, 10);
         if (isNaN(year) || isNaN(month) || isNaN(day)) {
-            alert('请输入完整的出生时间！');
+            alert(m.form.validationError);
             return;
         }
         onSubmit({ year, month, day, hour: input.hour });
@@ -120,31 +101,31 @@ const BirthInputForm: React.FC<{
         <form onSubmit={handleSubmit} className="birth-form">
             <div className="input-grid-3col">
                 <div className="input-field">
-                    <label>年</label>
+                    <label>{m.form.year}</label>
                     <input name="year" type="number" value={input.year} onChange={handleChange} min="1900" max="2100" required />
                 </div>
                 <div className="input-field">
-                    <label>月</label>
+                    <label>{m.form.month}</label>
                     <input name="month" type="number" value={input.month} onChange={handleChange} min="1" max="12" required />
                 </div>
                 <div className="input-field">
-                    <label>日</label>
+                    <label>{m.form.day}</label>
                     <input name="day" type="number" value={input.day} onChange={handleChange} min="1" max="31" required />
                 </div>
             </div>
             <div className="shichen-field">
-                <label>出生时辰</label>
+                <label>{m.form.shichenLabel}</label>
                 <select
                     value={input.hour}
                     onChange={(e) => setInput(prev => ({ ...prev, hour: parseInt(e.target.value, 10) }))}
                 >
-                    {SHICHEN_OPTIONS.map(opt => (
+                    {m.form.shichenOptions.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                 </select>
             </div>
             <button type="submit" disabled={isLoading}>
-                {isLoading ? '校准中...' : '获取专属灵符'}
+                {isLoading ? m.form.calculating : m.form.submit}
             </button>
         </form>
     );
@@ -155,6 +136,8 @@ const BirthInputForm: React.FC<{
 // ----------------------------------------------------
 
 export const Popup: React.FC = () => {
+    const [locale, setLocaleState] = useState<Locale>('zh');
+    const [m, setM] = useState<LocaleMessages>(getMessages('zh'));
     const [userSignature, setUserSignature] = useState<UserSignature | null>(null);
     const [userSignatureInput, setUserSignatureInput] = useState<UserSignatureInput | null>(null);
     const [fortuneResult, setFortuneResult] = useState<FortuneResult | null>(null);
@@ -164,18 +147,31 @@ export const Popup: React.FC = () => {
     const [detailExpanded, setDetailExpanded] = useState(false);
     const [showCeremony, setShowCeremony] = useState(false);
 
-    /** 统一应用运势结果（修复缓存加载时推荐项为空的问题） */
-    const applyFortuneResult = useCallback((result: FortuneResult) => {
+    /** 切换语言 */
+    const switchLocale = useCallback(async (newLocale: Locale) => {
+        setLocaleState(newLocale);
+        setM(getMessages(newLocale));
+        await chromeStorage.setLocale(newLocale);
+
+        // 重新生成语言相关的推荐内容
+        if (fortuneResult) {
+            setTalisman(getDailyTalisman(fortuneResult, newLocale));
+            setPhysicalRecommendation(getPhysicalAnchorRecommendation(fortuneResult, newLocale));
+        }
+    }, [fortuneResult]);
+
+    /** 统一应用运势结果 */
+    const applyFortuneResult = useCallback((result: FortuneResult, loc: Locale) => {
         setFortuneResult(result);
-        setTalisman(getDailyTalisman(result));
-        setPhysicalRecommendation(getPhysicalAnchorRecommendation(result));
+        setTalisman(getDailyTalisman(result, loc));
+        setPhysicalRecommendation(getPhysicalAnchorRecommendation(result, loc));
     }, []);
 
     /** 计算或从缓存加载今日运势 */
-    const calculateAndSetFortune = useCallback(async (signature: UserSignature) => {
+    const calculateAndSetFortune = useCallback(async (signature: UserSignature, loc: Locale) => {
         const cachedResult = await getDailyCache();
         if (cachedResult) {
-            applyFortuneResult(cachedResult.data);
+            applyFortuneResult(cachedResult.data, loc);
             return;
         }
 
@@ -183,17 +179,22 @@ export const Popup: React.FC = () => {
         const V_Day = calculateDailyCosmos(today);
         const result = calculateFortune(signature, V_Day);
         await setDailyCache(result);
-        applyFortuneResult(result);
+        applyFortuneResult(result, loc);
     }, [applyFortuneResult]);
 
     // 初始加载
     useEffect(() => {
         async function loadData() {
+            // 加载语言偏好
+            const savedLocale = await chromeStorage.getLocale();
+            setLocaleState(savedLocale);
+            setM(getMessages(savedLocale));
+
             // 非扩展环境 (本地开发) 使用模拟数据
             if (typeof chrome === 'undefined' || !chrome.storage) {
                 const mockSignature: UserSignature = { gold: 120, wood: 140, water: 80, fire: 150, earth: 100 };
                 setUserSignature(mockSignature);
-                await calculateAndSetFortune(mockSignature);
+                await calculateAndSetFortune(mockSignature, savedLocale);
                 setIsLoading(false);
                 return;
             }
@@ -203,7 +204,7 @@ export const Popup: React.FC = () => {
                 setUserSignatureInput(storedInput);
                 const signature = calculateUserSignature(storedInput);
                 setUserSignature(signature);
-                await calculateAndSetFortune(signature);
+                await calculateAndSetFortune(signature, savedLocale);
             }
             setIsLoading(false);
         }
@@ -220,26 +221,35 @@ export const Popup: React.FC = () => {
         await setStoredSignature(signature);
         setUserSignature(signature);
 
-        // 仪式感延迟 + 计算
         await Promise.all([
-            calculateAndSetFortune(signature),
+            calculateAndSetFortune(signature, locale),
             new Promise(r => setTimeout(r, 2000)),
         ]);
         setShowCeremony(false);
-    }, [calculateAndSetFortune]);
+    }, [calculateAndSetFortune, locale]);
 
     // --- 渲染 ---
+
+    // 语言切换按钮
+    const LangToggle = (
+        <button
+            className="lang-toggle"
+            onClick={() => switchLocale(locale === 'zh' ? 'en' : 'zh')}
+        >
+            {locale === 'zh' ? 'EN' : '中'}
+        </button>
+    );
 
     // 校准仪式动画
     if (showCeremony) {
         return (
             <div className="ceremony-screen">
                 <div className="ceremony-ring">
-                    {['金', '木', '水', '火', '土'].map((el, i) => (
+                    {m.ceremony.elements.map((el, i) => (
                         <span key={el} className="ceremony-el" style={{ animationDelay: `${i * 0.15}s` }}>{el}</span>
                     ))}
                 </div>
-                <p className="ceremony-text">正在校准五行能量...</p>
+                <p className="ceremony-text">{m.ceremony.text}</p>
             </div>
         );
     }
@@ -247,7 +257,7 @@ export const Popup: React.FC = () => {
     if (isLoading) {
         return (
             <div className="loading-screen">
-                <p>加载中...</p>
+                <p>{m.app.loading}</p>
             </div>
         );
     }
@@ -256,13 +266,15 @@ export const Popup: React.FC = () => {
     if (!userSignature) {
         return (
             <div className="welcome-screen">
-                <img src={haoyunImg} alt="好运符" className="welcome-talisman" />
-                <h2>五行校准</h2>
-                <p className="welcome-desc">输入出生时间，获取你的每日专属灵符</p>
+                {LangToggle}
+                <img src={haoyunImg} alt="Good Luck" className="welcome-talisman" />
+                <h2>{m.app.title}</h2>
+                <p className="welcome-desc">{m.welcome.desc}</p>
                 <BirthInputForm
                     onSubmit={handleInputSubmit}
                     currentInput={userSignatureInput || INITIAL_INPUT}
                     isLoading={isLoading}
+                    m={m}
                 />
             </div>
         );
@@ -275,7 +287,10 @@ export const Popup: React.FC = () => {
     // 主体验
     return (
         <div>
-            <h2 className="app-title">五行校准</h2>
+            <div className="top-bar">
+                <h2 className="app-title">{m.app.title}</h2>
+                {LangToggle}
+            </div>
 
             {/* ====== 首屏：每日灵符 ====== */}
             {talisman && (
@@ -289,7 +304,7 @@ export const Popup: React.FC = () => {
                         {fortuneResult && (
                             <div className="talisman-score-badge">
                                 <span className={scoreClass}>{fortuneResult.score}</span>
-                                <span className="score-unit">分</span>
+                                <span className="score-unit">{m.talisman.scoreUnit}</span>
                             </div>
                         )}
                     </div>
@@ -302,7 +317,7 @@ export const Popup: React.FC = () => {
             {/* ====== 灵性指引 ====== */}
             {physicalRecommendation && (
                 <div className="guidance-card">
-                    <span className="guidance-label">今日灵性指引</span>
+                    <span className="guidance-label">{m.talisman.guidanceLabel}</span>
                     <p className="guidance-text">"{physicalRecommendation.tarotAdvice}"</p>
                 </div>
             )}
@@ -314,18 +329,18 @@ export const Popup: React.FC = () => {
                         className="detail-toggle"
                         onClick={() => setDetailExpanded(!detailExpanded)}
                     >
-                        {detailExpanded ? '收起详细分析 ▲' : '查看详细五行分析 ▼'}
+                        {detailExpanded ? m.talisman.detailCollapse : m.talisman.detailExpand}
                     </button>
 
                     {detailExpanded && (
                         <div className="detail-content">
                             <div className="detail-card">
-                                <h4>本命五行签名</h4>
+                                <h4>{m.talisman.signatureTitle}</h4>
                                 <div className="signature-card">
                                     {Object.entries(userSignature).map(([element, value]) => (
                                         <div key={element} className="signature-item">
                                             <div className={`signature-item--label ${element}`}>
-                                                {FIVE_ELEMENT_NAMES[element as keyof FiveElementVector]}
+                                                {m.elements[element] || element}
                                             </div>
                                             <div className="signature-item--value">{value}</div>
                                         </div>
@@ -334,11 +349,11 @@ export const Popup: React.FC = () => {
                             </div>
 
                             <div className="detail-card">
-                                <h4>今日能量分布</h4>
+                                <h4>{m.talisman.energyTitle}</h4>
                                 <p className="text-secondary detail-meta">
-                                    综合评分 <strong className={scoreClass}>{fortuneResult.score}</strong>/100
+                                    {m.talisman.scoreLabel} <strong className={scoreClass}>{fortuneResult.score}</strong>/100
                                     &nbsp;&middot;&nbsp;
-                                    最强元素：<strong>{FIVE_ELEMENT_NAMES[fortuneResult.imbalanceElement]}</strong>
+                                    {m.talisman.strongestLabel}: <strong>{m.elements[fortuneResult.imbalanceElement]}</strong>
                                 </p>
                                 <RadarChart data={fortuneResult.energyDifference} />
                             </div>
@@ -350,16 +365,16 @@ export const Popup: React.FC = () => {
             {/* ====== 推荐好物 ====== */}
             {physicalRecommendation && (
                 <div className="products-section">
-                    <h4 className="section-title">推荐好物</h4>
+                    <h4 className="section-title">{m.products.title}</h4>
                     <div className="product-grid">
                         <a href={physicalRecommendation.crystal.buyLink} target="_blank" rel="noopener noreferrer" className="product-card">
                             <span className="product-icon">💎</span>
-                            <span className="product-label">能量水晶</span>
+                            <span className="product-label">{m.products.crystalLabel}</span>
                             <span className="product-name">{physicalRecommendation.crystal.name}</span>
                         </a>
                         <a href={physicalRecommendation.lifestyle.buyLink} target="_blank" rel="noopener noreferrer" className="product-card">
                             <span className="product-icon">🏠</span>
-                            <span className="product-label">空间净化</span>
+                            <span className="product-label">{m.products.lifestyleLabel}</span>
                             <span className="product-name">{physicalRecommendation.lifestyle.name}</span>
                         </a>
                     </div>
@@ -375,27 +390,29 @@ export const Popup: React.FC = () => {
                         score: fortuneResult.score,
                         tarotAdvice: physicalRecommendation.tarotAdvice,
                         talismanImageSrc: TALISMAN_IMAGES[talisman.id],
+                        locale,
                     })}
                 >
-                    保存今日灵符卡片
+                    {m.share.saveBtn}
                 </button>
             )}
 
             {/* ====== 重新校准 (折叠) ====== */}
             <details className="recalibrate-section">
-                <summary>重新校准本命五行</summary>
+                <summary>{m.recalibrate}</summary>
                 <div className="recalibrate-body">
                     <BirthInputForm
                         onSubmit={handleInputSubmit}
                         currentInput={userSignatureInput || INITIAL_INPUT}
                         isLoading={isLoading}
+                        m={m}
                     />
                 </div>
             </details>
 
             {/* ====== 底部声明 ====== */}
             <footer className="disclaimer">
-                本工具仅供娱乐与参考。
+                {m.app.disclaimer}
             </footer>
         </div>
     );

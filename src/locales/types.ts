@@ -1,0 +1,48 @@
+export type Locale = 'zh' | 'en';
+
+export interface LocaleMessages {
+    app: {
+        title: string;
+        loading: string;
+        disclaimer: string;
+    };
+    welcome: {
+        desc: string;
+    };
+    form: {
+        year: string;
+        month: string;
+        day: string;
+        shichenLabel: string;
+        submit: string;
+        calculating: string;
+        validationError: string;
+        shichenOptions: Array<{ label: string; value: number }>;
+    };
+    ceremony: {
+        text: string;
+        elements: string[];
+    };
+    elements: Record<string, string>;
+    talisman: {
+        guidanceLabel: string;
+        detailExpand: string;
+        detailCollapse: string;
+        signatureTitle: string;
+        signatureDesc: string;
+        energyTitle: string;
+        scoreLabel: string;
+        strongestLabel: string;
+        scoreUnit: string;
+    };
+    products: {
+        title: string;
+        crystalLabel: string;
+        lifestyleLabel: string;
+    };
+    share: {
+        saveBtn: string;
+        brandLine: string;
+    };
+    recalibrate: string;
+}

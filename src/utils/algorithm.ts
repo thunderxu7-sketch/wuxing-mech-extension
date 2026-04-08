@@ -1,5 +1,6 @@
 // src/utils/algorithm.ts
 import solarLunar from 'solarlunar';
+import type { Locale } from '../locales/types';
 export interface UserSignatureInput {
     year: number;
     month: number; // 1-12
@@ -371,136 +372,178 @@ export function getNftAnchorRecommendation(result: FortuneResult): NftAnchorReco
     }
 }
 
+// --- 灵符多语言数据 ---
+
+interface TalismanData { name: string; blessing: string; subtitle: string; }
+type TalismanDataMap = Record<string, Record<Locale, TalismanData>>;
+
+const TALISMAN_DATA: TalismanDataMap = {
+    haoyun:  { zh: { name: '好运符', blessing: '万事顺心 好运自来', subtitle: '今日宜：随心而行' },
+               en: { name: 'Good Luck Charm', blessing: 'Fortune favors you today', subtitle: 'Today: go with the flow' } },
+    yongqi:  { zh: { name: '勇气符', blessing: '毅力可破万重关', subtitle: '今日宜：迎难而上' },
+               en: { name: 'Courage Charm', blessing: 'Resilience conquers all', subtitle: 'Today: face challenges head-on' } },
+    zhaocai: { zh: { name: '招财符', blessing: '财源滚滚 福运绵长', subtitle: '今日宜：聚财纳福' },
+               en: { name: 'Wealth Charm', blessing: 'Abundance flows your way', subtitle: 'Today: attract prosperity' } },
+    shiye:   { zh: { name: '事业符', blessing: '事业繁荣 前程似锦', subtitle: '今日宜：开拓进取' },
+               en: { name: 'Career Charm', blessing: 'A bright path lies ahead', subtitle: 'Today: seize opportunities' } },
+    zhihui:  { zh: { name: '智慧符', blessing: '智慧如光 映照万物', subtitle: '今日宜：静心思考' },
+               en: { name: 'Wisdom Charm', blessing: 'Clarity illuminates all', subtitle: 'Today: reflect and learn' } },
+    pingan:  { zh: { name: '平安符', blessing: '岁岁平安 顺心如意', subtitle: '今日宜：修身养性' },
+               en: { name: 'Peace Charm', blessing: 'Serenity and safety surround you', subtitle: 'Today: nurture yourself' } },
+    yinyuan: { zh: { name: '姻缘符', blessing: '千里姻缘 一线牵', subtitle: '今日宜：广结善缘' },
+               en: { name: 'Love Charm', blessing: 'Bonds of destiny await', subtitle: 'Today: open your heart' } },
+    fugui:   { zh: { name: '富贵符', blessing: '富贵双全 万事如意', subtitle: '今日宜：厚积薄发' },
+               en: { name: 'Prosperity Charm', blessing: 'Wealth and honor in harmony', subtitle: 'Today: build your foundation' } },
+};
+
 /**
  * @description 根据运势结果匹配每日灵符，覆盖全部 8 张符图。
- * 策略：
- *   - 高分 (>=80)：好运符 — 五行畅通，好运加持
- *   - 低分 (<35)：勇气符 — 逆境之日，以勇气破局
- *   - 中间段按失衡元素匹配，木元素按日期奇偶交替事业符/智慧符
  */
-export function getDailyTalisman(result: FortuneResult): TalismanRecommendation {
-    // 高分覆盖：好运符
+export function getDailyTalisman(result: FortuneResult, locale: Locale = 'zh'): TalismanRecommendation {
+    let id: string;
+
     if (result.score >= 80) {
-        return { id: 'haoyun', name: '好运符', blessing: '万事顺心 好运自来', subtitle: '今日宜：随心而行' };
+        id = 'haoyun';
+    } else if (result.score < 35) {
+        id = 'yongqi';
+    } else {
+        const dayOfMonth = new Date().getDate();
+        switch (result.imbalanceElement) {
+            case 'gold':  id = 'zhaocai'; break;
+            case 'wood':  id = dayOfMonth % 2 === 0 ? 'shiye' : 'zhihui'; break;
+            case 'water': id = 'pingan'; break;
+            case 'fire':  id = 'yinyuan'; break;
+            case 'earth': id = 'fugui'; break;
+            default:      id = 'haoyun'; break;
+        }
     }
-    // 低分覆盖：勇气符
-    if (result.score < 35) {
-        return { id: 'yongqi', name: '勇气符', blessing: '毅力可破万重关', subtitle: '今日宜：迎难而上' };
-    }
-    // 中间段：按失衡元素匹配
-    const dayOfMonth = new Date().getDate();
-    switch (result.imbalanceElement) {
-        case 'gold':
-            return { id: 'zhaocai', name: '招财符', blessing: '财源滚滚 福运绵长', subtitle: '今日宜：聚财纳福' };
-        case 'wood':
-            // 奇偶日交替事业符/智慧符
-            return dayOfMonth % 2 === 0
-                ? { id: 'shiye', name: '事业符', blessing: '事业繁荣 前程似锦', subtitle: '今日宜：开拓进取' }
-                : { id: 'zhihui', name: '智慧符', blessing: '智慧如光 映照万物', subtitle: '今日宜：静心思考' };
-        case 'water':
-            return { id: 'pingan', name: '平安符', blessing: '岁岁平安 顺心如意', subtitle: '今日宜：修身养性' };
-        case 'fire':
-            return { id: 'yinyuan', name: '姻缘符', blessing: '千里姻缘 一线牵', subtitle: '今日宜：广结善缘' };
-        case 'earth':
-            return { id: 'fugui', name: '富贵符', blessing: '富贵双全 万事如意', subtitle: '今日宜：厚积薄发' };
-        default:
-            return { id: 'haoyun', name: '好运符', blessing: '万事顺心 好运自来', subtitle: '今日宜：随心而行' };
-    }
+
+    const data = TALISMAN_DATA[id][locale];
+    return { id, ...data };
 }
 
-// TODO: 接入阿里妈妈淘宝客 API 后替换为带 PID 的推广链接
-const generateAffiliateLink = (keyword: string): string => {
+// TODO: zh 接入阿里妈妈淘宝客 API 后替换为带 PID 的推广链接
+function generateAffiliateLink(keyword: string, locale: Locale): string {
     const query = encodeURIComponent(keyword);
+    if (locale === 'en') {
+        return `https://www.amazon.com/s?k=${query}&tag=wuxingdaily-20`;
+    }
     return `https://s.taobao.com/search?q=${query}`;
+}
+
+// --- 商品多语言数据 ---
+
+interface ProductSet {
+    themeColor: string;
+    crystal: { name: string; keyword: string };
+    tarotAdvice: string;
+    lifestyle: { name: string; keyword: string };
+}
+
+const PRODUCT_DATA: Record<string, Record<Locale, ProductSet>> = {
+    gold: {
+        zh: {
+            themeColor: '红 / 黑 (火克金，水泻金)',
+            crystal: { name: '黑曜石手链', keyword: '黑曜石手链' },
+            tarotAdvice: '审视你的『宝剑』牌组，寻找行动与克制之间的平衡。',
+            lifestyle: { name: '红色香薰蜡烛', keyword: '红色香薰蜡烛' },
+        },
+        en: {
+            themeColor: 'Red / Black (Fire controls Metal)',
+            crystal: { name: 'Black Obsidian Bracelet', keyword: 'Black Obsidian Bracelet' },
+            tarotAdvice: 'Examine your Swords cards — find the balance between action and restraint.',
+            lifestyle: { name: 'Red Aromatherapy Candle', keyword: 'Red Aromatherapy Candle' },
+        },
+    },
+    wood: {
+        zh: {
+            themeColor: '白 / 红 (金克木，火泻木)',
+            crystal: { name: '白水晶簇摆件', keyword: '白水晶簇摆件' },
+            tarotAdvice: '关注『权杖』牌组的能量，将生发之力转化为具体行动。',
+            lifestyle: { name: '艺术画册', keyword: '艺术画册 精装' },
+        },
+        en: {
+            themeColor: 'White / Red (Metal controls Wood)',
+            crystal: { name: 'Clear Quartz Cluster', keyword: 'Clear Quartz Cluster' },
+            tarotAdvice: 'Focus on your Wands — channel growth energy into concrete action.',
+            lifestyle: { name: 'Fine Art Book', keyword: 'Coffee Table Art Book' },
+        },
+    },
+    water: {
+        zh: {
+            themeColor: '黄 / 紫 (土克水，金生水)',
+            crystal: { name: '黄水晶摆件', keyword: '黄水晶摆件 招财' },
+            tarotAdvice: '冥想与『五芒星』牌组，让财务和现实基础更加稳固。',
+            lifestyle: { name: '星座周边礼物', keyword: '星座礼物 摩羯座 金牛座' },
+        },
+        en: {
+            themeColor: 'Yellow / Purple (Earth controls Water)',
+            crystal: { name: 'Citrine Crystal', keyword: 'Citrine Crystal Decor' },
+            tarotAdvice: 'Meditate on your Pentacles — strengthen your material foundations.',
+            lifestyle: { name: 'Zodiac Gifts', keyword: 'Capricorn Taurus Virgo Gifts' },
+        },
+    },
+    fire: {
+        zh: {
+            themeColor: '蓝 / 绿 (水克火，木生火)',
+            crystal: { name: '青金石吊坠', keyword: '青金石吊坠' },
+            tarotAdvice: '多加解读『圣杯』牌组，关注内心感受与情感交流，而非外部冲突。',
+            lifestyle: { name: '蓝色陶瓷茶具', keyword: '蓝色陶瓷茶具套装' },
+        },
+        en: {
+            themeColor: 'Blue / Green (Water controls Fire)',
+            crystal: { name: 'Lapis Lazuli Pendant', keyword: 'Lapis Lazuli Pendant' },
+            tarotAdvice: 'Read your Cups — focus on inner feelings and connection, not conflict.',
+            lifestyle: { name: 'Blue Ceramic Tea Set', keyword: 'Blue Ceramic Tea Set' },
+        },
+    },
+    earth: {
+        zh: {
+            themeColor: '绿 / 白 (木克土，金泻土)',
+            crystal: { name: '孔雀石手链', keyword: '孔雀石手链' },
+            tarotAdvice: '通过『权杖』和『愚人』牌，鼓励自己打破现状，迎接改变。',
+            lifestyle: { name: '室内绿植盆栽', keyword: '室内盆栽 绿植 桌面' },
+        },
+        en: {
+            themeColor: 'Green / White (Wood controls Earth)',
+            crystal: { name: 'Malachite Bracelet', keyword: 'Malachite Bracelet' },
+            tarotAdvice: 'Draw from the Wands and the Fool — break free and embrace change.',
+            lifestyle: { name: 'Indoor Bonsai Plant', keyword: 'Indoor Bonsai Tree' },
+        },
+    },
+    default: {
+        zh: {
+            themeColor: '黄 / 金',
+            crystal: { name: '白水晶柱', keyword: '白水晶柱 天然' },
+            tarotAdvice: '当前能量平衡，保持警觉，抽一张大阿卡那牌作为指引。',
+            lifestyle: { name: '护肤套装礼盒', keyword: '护肤套装 礼盒' },
+        },
+        en: {
+            themeColor: 'Yellow / Gold',
+            crystal: { name: 'Clear Quartz Point', keyword: 'Clear Quartz Point' },
+            tarotAdvice: 'Energy is balanced — stay alert and draw a Major Arcana for guidance.',
+            lifestyle: { name: 'Skincare Gift Set', keyword: 'Skincare Gift Set' },
+        },
+    },
 };
 
 /**
  * @description 根据运势结果（失衡元素）生成实体产品和生活方式推荐。
- * 策略：推荐的锚点旨在通过实体接触或行为来平衡失衡元素。
- * @param result 运势计算结果
- * @returns 包含推荐产品和建议的对象
  */
-export function getPhysicalAnchorRecommendation(result: FortuneResult): PhysicalAnchorRecommendation {
-    const imbalance = result.imbalanceElement;
+export function getPhysicalAnchorRecommendation(result: FortuneResult, locale: Locale = 'zh'): PhysicalAnchorRecommendation {
+    const key = PRODUCT_DATA[result.imbalanceElement] ? result.imbalanceElement : 'default';
+    const data = PRODUCT_DATA[key][locale];
 
-    switch (imbalance) {
-        case 'gold':
-            return {
-                themeColor: "红 / 黑 (火克金，水泻金)",
-                crystal: {
-                    name: "黑曜石手链",
-                    buyLink: generateAffiliateLink("黑曜石手链")
-                },
-                tarotAdvice: "审视你的『宝剑』牌组，寻找行动与克制之间的平衡。",
-                lifestyle: {
-                    name: "红色香薰蜡烛",
-                    buyLink: generateAffiliateLink("红色香薰蜡烛")
-                }
-            };
-        case 'wood':
-            return {
-                themeColor: "白 / 红 (金克木，火泻木)",
-                crystal: {
-                    name: "白水晶簇摆件",
-                    buyLink: generateAffiliateLink("白水晶簇摆件")
-                },
-                tarotAdvice: "关注『权杖』牌组的能量，将生发之力转化为具体行动。",
-                lifestyle: {
-                    name: "艺术画册",
-                    buyLink: generateAffiliateLink("艺术画册 精装")
-                }
-            };
-        case 'water':
-            return {
-                themeColor: "黄 / 紫 (土克水，金生水)",
-                crystal: {
-                    name: "黄水晶摆件",
-                    buyLink: generateAffiliateLink("黄水晶摆件 招财")
-                },
-                tarotAdvice: "冥想与『五芒星』牌组，让财务和现实基础更加稳固。",
-                lifestyle: {
-                    name: "星座周边礼物",
-                    buyLink: generateAffiliateLink("星座礼物 摩羯座 金牛座")
-                }
-            };
-        case 'fire':
-            return {
-                themeColor: "蓝 / 绿 (水克火，木生火)",
-                crystal: {
-                    name: "青金石吊坠",
-                    buyLink: generateAffiliateLink("青金石吊坠")
-                },
-                tarotAdvice: "多加解读『圣杯』牌组，关注内心感受与情感交流，而非外部冲突。",
-                lifestyle: {
-                    name: "蓝色陶瓷茶具",
-                    buyLink: generateAffiliateLink("蓝色陶瓷茶具套装")
-                }
-            };
-        case 'earth':
-            return {
-                themeColor: "绿 / 白 (木克土，金泻土)",
-                crystal: {
-                    name: "孔雀石手链",
-                    buyLink: generateAffiliateLink("孔雀石手链")
-                },
-                tarotAdvice: "通过『权杖』和『愚人』牌，鼓励自己打破现状，迎接改变。",
-                lifestyle: {
-                    name: "室内绿植盆栽",
-                    buyLink: generateAffiliateLink("室内盆栽 绿植 桌面")
-                }
-            };
-        default:
-            return {
-                themeColor: "黄 / 金",
-                crystal: {
-                    name: "白水晶柱",
-                    buyLink: generateAffiliateLink("白水晶柱 天然")
-                },
-                tarotAdvice: "当前能量平衡，保持警觉，抽一张大阿卡那牌作为指引。",
-                lifestyle: {
-                    name: "护肤套装礼盒",
-                    buyLink: generateAffiliateLink("护肤套装 礼盒")
-                }
-            };
-    }
+    return {
+        themeColor: data.themeColor,
+        crystal: {
+            name: data.crystal.name,
+            buyLink: generateAffiliateLink(data.crystal.keyword, locale),
+        },
+        tarotAdvice: data.tarotAdvice,
+        lifestyle: {
+            name: data.lifestyle.name,
+            buyLink: generateAffiliateLink(data.lifestyle.keyword, locale),
+        },
+    };
 }
