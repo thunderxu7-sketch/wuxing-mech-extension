@@ -372,19 +372,35 @@ export function getNftAnchorRecommendation(result: FortuneResult): NftAnchorReco
 }
 
 /**
- * @description 根据运势结果匹配每日灵符。
- * 策略：根据失衡元素推荐对应的灵符，帮助用户在心理层面"补"所缺能量。
+ * @description 根据运势结果匹配每日灵符，覆盖全部 8 张符图。
+ * 策略：
+ *   - 高分 (>=80)：好运符 — 五行畅通，好运加持
+ *   - 低分 (<35)：勇气符 — 逆境之日，以勇气破局
+ *   - 中间段按失衡元素匹配，木元素按日期奇偶交替事业符/智慧符
  */
 export function getDailyTalisman(result: FortuneResult): TalismanRecommendation {
+    // 高分覆盖：好运符
+    if (result.score >= 80) {
+        return { id: 'haoyun', name: '好运符', blessing: '万事顺心 好运自来', subtitle: '今日宜：随心而行' };
+    }
+    // 低分覆盖：勇气符
+    if (result.score < 35) {
+        return { id: 'yongqi', name: '勇气符', blessing: '毅力可破万重关', subtitle: '今日宜：迎难而上' };
+    }
+    // 中间段：按失衡元素匹配
+    const dayOfMonth = new Date().getDate();
     switch (result.imbalanceElement) {
         case 'gold':
             return { id: 'zhaocai', name: '招财符', blessing: '财源滚滚 福运绵长', subtitle: '今日宜：聚财纳福' };
         case 'wood':
-            return { id: 'shiye', name: '事业符', blessing: '事业繁荣 前程似锦', subtitle: '今日宜：开拓进取' };
+            // 奇偶日交替事业符/智慧符
+            return dayOfMonth % 2 === 0
+                ? { id: 'shiye', name: '事业符', blessing: '事业繁荣 前程似锦', subtitle: '今日宜：开拓进取' }
+                : { id: 'zhihui', name: '智慧符', blessing: '智慧如光 映照万物', subtitle: '今日宜：静心思考' };
         case 'water':
-            return { id: 'zhihui', name: '智慧符', blessing: '智慧如光 映照万物', subtitle: '今日宜：静心思考' };
-        case 'fire':
             return { id: 'pingan', name: '平安符', blessing: '岁岁平安 顺心如意', subtitle: '今日宜：修身养性' };
+        case 'fire':
+            return { id: 'yinyuan', name: '姻缘符', blessing: '千里姻缘 一线牵', subtitle: '今日宜：广结善缘' };
         case 'earth':
             return { id: 'fugui', name: '富贵符', blessing: '富贵双全 万事如意', subtitle: '今日宜：厚积薄发' };
         default:
