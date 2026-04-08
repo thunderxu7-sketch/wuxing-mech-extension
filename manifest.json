@@ -13,8 +13,13 @@
     "default_icon": "icon48.png",
     "default_title": "五行校准"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "permissions": [
-    "storage" 
+    "storage",
+    "alarms",
+    "notifications"
   ],
   "host_permissions": []
 }
