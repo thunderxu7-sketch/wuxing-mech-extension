@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": "./node_modules/.tmp/test-build",
+    "rootDir": ".",
+    "types": ["node", "chrome"],
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": [
+    "src/api/chromeStorage.ts",
+    "src/locales/types.ts",
+    "src/types/solarlunar.d.ts",
+    "src/utils/algorithm.ts",
+    "src/utils/time.ts",
+    "tests/**/*.ts"
+  ]
+}

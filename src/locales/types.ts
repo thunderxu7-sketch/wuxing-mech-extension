@@ -17,6 +17,7 @@ export interface LocaleMessages {
         submit: string;
         calculating: string;
         validationError: string;
+        invalidDateError: string;
         shichenOptions: Array<{ label: string; value: number }>;
     };
     ceremony: {

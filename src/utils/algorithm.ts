@@ -383,7 +383,11 @@ const TALISMAN_DATA: TalismanDataMap = {
 /**
  * @description 根据运势结果匹配每日灵符，覆盖全部 8 张符图。
  */
-export function getDailyTalisman(result: FortuneResult, locale: Locale = 'zh'): TalismanRecommendation {
+export function getDailyTalisman(
+    result: FortuneResult,
+    locale: Locale = 'zh',
+    now: Date = new Date(),
+): TalismanRecommendation {
     let id: string;
 
     if (result.score >= 80) {
@@ -391,7 +395,7 @@ export function getDailyTalisman(result: FortuneResult, locale: Locale = 'zh'): 
     } else if (result.score < 35) {
         id = 'yongqi';
     } else {
-        const dayOfMonth = new Date().getDate();
+        const dayOfMonth = now.getDate();
         switch (result.imbalanceElement) {
             case 'gold':  id = 'zhaocai'; break;
             case 'wood':  id = dayOfMonth % 2 === 0 ? 'shiye' : 'zhihui'; break;

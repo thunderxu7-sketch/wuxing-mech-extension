@@ -19,6 +19,7 @@ import {
     getDailyCache,
     setDailyCache
 } from '../api/chromeStorage';
+import { hourToShichen, isValidCalendarDate } from '../utils/time';
 import { RadarChart } from './components/RadarChart';
 import { generateShareImage } from './utils/generateShareImage';
 import { trackDAU, trackEvent } from '../api/analytics';
@@ -49,12 +50,6 @@ const TALISMAN_IMAGES: Record<string, string> = {
 const INITIAL_INPUT: UserSignatureInput = {
     year: 1990, month: 1, day: 1, hour: 12,
 };
-
-/** 将 0-23 小时映射到时辰选择器的偶数值 */
-function hourToShichen(hour: number): number {
-    if (hour === 23) return 0;
-    return Math.floor(hour / 2) * 2;
-}
 
 // ----------------------------------------------------
 // 出生时间表单
@@ -93,6 +88,10 @@ const BirthInputForm: React.FC<{
         const day = parseInt(input.day, 10);
         if (isNaN(year) || isNaN(month) || isNaN(day)) {
             alert(m.form.validationError);
+            return;
+        }
+        if (!isValidCalendarDate(year, month, day)) {
+            alert(m.form.invalidDateError);
             return;
         }
         onSubmit({ year, month, day, hour: input.hour });
@@ -179,7 +178,7 @@ export const Popup: React.FC = () => {
 
     /** 计算或从缓存加载今日运势 */
     const calculateAndSetFortune = useCallback(async (signature: UserSignature, loc: Locale) => {
-        const cachedResult = await getDailyCache();
+        const cachedResult = await getDailyCache(signature);
         if (cachedResult) {
             applyFortuneResult(cachedResult.data, loc);
             return;
@@ -188,7 +187,7 @@ export const Popup: React.FC = () => {
         const today = new Date();
         const V_Day = calculateDailyCosmos(today);
         const result = calculateFortune(signature, V_Day);
-        await setDailyCache(result);
+        await setDailyCache(signature, result);
         applyFortuneResult(result, loc);
     }, [applyFortuneResult]);
 

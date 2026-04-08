@@ -17,6 +17,7 @@ export const en: LocaleMessages = {
         submit: 'Get My Talisman',
         calculating: 'Calibrating...',
         validationError: 'Please enter your complete birth time.',
+        invalidDateError: 'Please enter a valid birth date.',
         shichenOptions: [
             { label: 'Rat (23:00-01:00)', value: 0 },
             { label: 'Ox (01:00-03:00)', value: 2 },

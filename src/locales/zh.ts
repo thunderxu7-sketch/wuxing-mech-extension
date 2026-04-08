@@ -17,6 +17,7 @@ export const zh: LocaleMessages = {
         submit: '获取专属灵符',
         calculating: '校准中...',
         validationError: '请输入完整的出生时间！',
+        invalidDateError: '请输入有效的出生日期！',
         shichenOptions: [
             { label: '子时 (23:00-01:00)', value: 0 },
             { label: '丑时 (01:00-03:00)', value: 2 },
