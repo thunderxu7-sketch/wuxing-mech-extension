@@ -1,13 +1,18 @@
-// src/ui/index.scss
-@use "sass:color"; 
+@use "sass:color";
+
 // ----------------------------------------------------
-// SCSS 变量
+// 变量
 // ----------------------------------------------------
-$primary-color: #007bff; // 主色调：蓝色
-$secondary-color: #6c757d; // 次要文本色
-$background-light: #f8f9fa; // 浅背景
-$card-light: #ffffff; // 卡片背景
-$border-color: #e9ecef; // 分割线/边框颜色
+$gold-accent: #b8860b;
+$gold-accent-dark: #8a6508;
+$text-primary: #2c2c2c;
+$text-secondary: #6c757d;
+$text-muted: #999;
+$bg-body: #fcfbf7;
+$bg-card: #ffffff;
+$border-light: #e9ecef;
+$border-warm: #e0dcd0;
+$purple-accent: #9c27b0;
 
 $color-wood: #28a745;
 $color-fire: #dc3545;
@@ -16,190 +21,444 @@ $color-gold: #6c757d;
 $color-water: #007bff;
 
 // ----------------------------------------------------
-// 全局样式
+// 全局
 // ----------------------------------------------------
 body {
     margin: 0;
-    // 关键修改：使用衬线体，提升文化感
-    font-family: 'Songti SC', 'Noto Serif SC', 'SimSun', 'Times New Roman', serif; 
+    font-family: 'Songti SC', 'Noto Serif SC', 'SimSun', 'Times New Roman', serif;
     -webkit-font-smoothing: antialiased;
-    
-    // 关键修改：增加纸张质感背景颜色
-    background-color: #fcfbf7; // 米白色/宣纸色
-    
-    // 可选：添加淡淡的云纹背景图 (这是一个轻量的 CSS 图案)
-    background-image: radial-gradient(#e6e6e6 1px, transparent 1px), radial-gradient(#e6e6e6 1px, transparent 1px);
+    background-color: $bg-body;
+    background-image:
+        radial-gradient(#e6e6e6 1px, transparent 1px),
+        radial-gradient(#e6e6e6 1px, transparent 1px);
     background-size: 20px 20px;
     background-position: 0 0, 10px 10px;
-    
-    color: #2c2c2c; // 字体颜色稍微调软一点，不要纯黑
+    color: $text-primary;
 }
 
 #root {
-    // 关键优化：使用 max-width，并让 width 保持 fluid
-    max-width: 500px; 
-    width: 100%; // 让它适应父容器宽度
-    min-width: 320px; // 最小宽度限制
-    
-    // 边距调整
-    padding: 20px 25px; 
+    max-width: 420px;
+    width: 100%;
+    min-width: 320px;
+    padding: 24px 20px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 15px; // 稍微减小主间隔，让内容更紧凑
-    
-    // 修改卡片样式，使其像一张贴在背景上的纸
-    background-color: #ffffff; 
-    border: 1px solid #e0dcd0; // 增加边框
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); // 更柔和的阴影
+    gap: 16px;
+    background-color: $bg-card;
+    border: 1px solid $border-warm;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
     border-radius: 8px;
 }
 
-h2 {
-    font-size: 28px;
+// ----------------------------------------------------
+// 通用
+// ----------------------------------------------------
+h2, .app-title {
+    font-size: 24px;
     font-weight: bold;
-    color: #b8860b; // 使用暗金色/土豪金作为标题色，更符合“招财”
+    color: $gold-accent;
     text-align: center;
-    margin-bottom: 25px;
-    letter-spacing: 2px; // 增加字间距，更庄重
-    text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+    margin: 0 0 4px 0;
+    letter-spacing: 3px;
 }
 
-h3 {
-    font-size: 18px;
-    color: #343a40; // 标题使用深色，更沉稳
-    margin-top: 0;
-    margin-bottom: 12px;
+h4 {
+    font-size: 15px;
+    color: #343a40;
+    margin: 0 0 8px 0;
 }
 
-p {
-    line-height: 1.6;
+.text-secondary { color: $text-secondary; }
+.score-good { color: $color-wood; font-weight: bold; }
+.score-medium { color: $color-earth; font-weight: bold; }
+.score-bad { color: $color-fire; font-weight: bold; }
+
+.section-title {
+    text-align: center;
+    color: $text-secondary;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+// ----------------------------------------------------
+// 加载页
+// ----------------------------------------------------
+.loading-screen {
+    text-align: center;
+    padding: 60px 20px;
+    color: $text-secondary;
+    font-size: 15px;
+}
+
+// ----------------------------------------------------
+// 欢迎页 (首次使用)
+// ----------------------------------------------------
+.welcome-screen {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.welcome-talisman {
+    width: 180px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     margin-bottom: 8px;
 }
 
-hr {
-    border: none;
-    border-top: 1px solid $border-color;
-    margin: 30px 0;
+.welcome-desc {
+    color: $text-secondary;
+    font-size: 14px;
+    margin: 0 0 12px 0;
 }
 
 // ----------------------------------------------------
-// UI 组件样式
+// 灵符首屏
 // ----------------------------------------------------
-
-.info-card {
-    background-color: rgba(240, 248, 255, 0.5); // 半透明背景
-    border: 1px solid rgba(0, 123, 255, 0.1);
-    border-radius: 8px;
-    padding: 0;
-    margin-bottom: 15px;
+.talisman-hero {
+    text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
+}
 
-    &.fortune-result {
-        padding: 15px;
-        background-color: rgba(255, 250, 240, 0.6); // 暖色调背景
-        border: 1px solid rgba(255, 193, 7, 0.2);
+.talisman-image-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.talisman-image {
+    width: 220px;
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+}
+
+.talisman-score-badge {
+    position: absolute;
+    top: 10px;
+    right: -12px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid $gold-accent;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    span:first-child {
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    .score-unit {
+        font-size: 10px;
+        color: $text-muted;
+        line-height: 1;
     }
 }
 
-// 运势分数行布局优化
-.score-summary {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 10px; // 确保底部有间距
+.talisman-name {
+    font-size: 20px;
+    color: $gold-accent;
+    margin: 14px 0 4px 0;
+    letter-spacing: 4px;
 }
 
-// 按钮样式
-button {
-    background-color: #b8860b;
-    color: white;
-    padding: 10px 18px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
+.talisman-blessing {
+    font-size: 13px;
+    color: $text-secondary;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.talisman-subtitle {
+    font-size: 15px;
+    color: $text-primary;
+    font-weight: 600;
+    margin: 6px 0 0 0;
+}
+
+// ----------------------------------------------------
+// 灵性指引
+// ----------------------------------------------------
+.guidance-card {
+    border-left: 3px solid $purple-accent;
+    background: #fdfbff;
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+}
+
+.guidance-label {
+    font-size: 11px;
+    color: color.adjust($purple-accent, $lightness: -10%);
+    font-weight: bold;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.guidance-text {
+    font-size: 14px;
+    font-style: italic;
+    line-height: 1.7;
+    color: #4a4a4a;
+    margin: 0;
+}
+
+// ----------------------------------------------------
+// 折叠详细分析
+// ----------------------------------------------------
+.detail-section {
+    margin-top: 4px;
+}
+
+.detail-toggle {
+    background: none;
+    border: 1px dashed $border-light;
+    color: $text-secondary;
+    font-size: 13px;
+    padding: 8px;
     width: 100%;
-    box-sizing: border-box;
-    margin-top: 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 0;
+    font-family: inherit;
+    transition: all 0.2s;
 
     &:hover {
-        background-color: #8a6508;
-    }
-
-    &:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
+        color: $text-primary;
+        border-color: $border-warm;
+        background: rgba(0, 0, 0, 0.02);
     }
 }
 
-// 输入框样式 (使用 Grid 布局)
-.input-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-
-    input[type="number"] {
-        padding: 8px 10px;
-        border: 1px solid #ced4da;
-        border-radius: 4px; // 稍微小一点的圆角
-        font-size: 15px;
-        text-align: center;
-        width: 100%;
-        box-sizing: border-box;
-
-        &:focus {
-            outline: none;
-            border-color: $primary-color;
-            box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
-        }
-    }
+.detail-content {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-// 运势评分颜色
-.score-good { color: $color-wood; font-weight: bold; }
-.score-medium { color: $color-earth; font-weight: bold; } 
-.score-bad { color: $color-fire; font-weight: bold; } 
-
-.imbalance-element {
-    font-weight: bold;
-    color: $color-fire; // 红色突出危险或需要注意
+.detail-card {
+    background: rgba(240, 248, 255, 0.5);
+    border: 1px solid rgba(0, 123, 255, 0.1);
+    border-radius: 8px;
+    padding: 14px;
 }
 
-// 本命签名展示优化
+.detail-meta {
+    font-size: 13px;
+    text-align: center;
+    margin: 0 0 8px 0;
+}
+
+// 五行签名
 .signature-card {
-    margin-top: 10px;
     display: flex;
     justify-content: space-around;
     padding: 10px 0;
-    border: 1px solid $border-color;
+    border: 1px solid $border-light;
     border-radius: 6px;
+    margin-top: 8px;
 
     .signature-item {
         text-align: center;
-        padding: 0 5px;
+        padding: 0 4px;
 
         &--label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             margin-bottom: 4px;
-            // 五行颜色指示
             &.gold { color: $color-gold; }
             &.wood { color: $color-wood; }
             &.water { color: $color-water; }
             &.fire { color: $color-fire; }
             &.earth { color: $color-earth; }
         }
+
         &--value {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
         }
     }
 }
 
-.text-secondary {
-    color: $secondary-color; // 使用 SCSS 变量
+// ----------------------------------------------------
+// 推荐好物
+// ----------------------------------------------------
+.products-section {
+    margin-top: 4px;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.product-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    border: 1px solid $border-light;
+    border-radius: 6px;
+    text-decoration: none;
+    color: $text-primary;
+    transition: all 0.2s;
+    background: $bg-card;
+
+    &:hover {
+        border-color: $gold-accent;
+        box-shadow: 0 2px 8px rgba($gold-accent, 0.15);
+    }
+
+    .product-icon { font-size: 24px; }
+
+    .product-label {
+        font-size: 11px;
+        color: $text-secondary;
+        font-weight: bold;
+    }
+
+    .product-name {
+        font-size: 12px;
+        color: $color-water;
+        text-align: center;
+        line-height: 1.4;
+    }
+}
+
+// ----------------------------------------------------
+// 出生时间表单
+// ----------------------------------------------------
+.birth-form {
+    width: 100%;
+}
+
+.input-grid-3col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    label {
+        font-size: 12px;
+        color: $text-secondary;
+        text-align: center;
+    }
+
+    input[type="number"] {
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 15px;
+        text-align: center;
+        width: 100%;
+        box-sizing: border-box;
+        font-family: inherit;
+
+        &:focus {
+            outline: none;
+            border-color: $gold-accent;
+            box-shadow: 0 0 0 2px rgba($gold-accent, 0.2);
+        }
+    }
+}
+
+.shichen-field {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    label {
+        font-size: 12px;
+        color: $text-secondary;
+    }
+
+    select {
+        padding: 8px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+        font-family: inherit;
+        background: $bg-card;
+
+        &:focus {
+            outline: none;
+            border-color: $gold-accent;
+            box-shadow: 0 0 0 2px rgba($gold-accent, 0.2);
+        }
+    }
+}
+
+button[type="submit"] {
+    background-color: $gold-accent;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 12px;
+    transition: background-color 0.2s;
+    letter-spacing: 1px;
+
+    &:hover { background-color: $gold-accent-dark; }
+    &:disabled { background-color: #ccc; cursor: not-allowed; }
+}
+
+// ----------------------------------------------------
+// 重新校准 (折叠)
+// ----------------------------------------------------
+.recalibrate-section {
+    border-top: 1px solid $border-warm;
+    padding-top: 12px;
+
+    summary {
+        font-size: 13px;
+        color: $text-secondary;
+        cursor: pointer;
+        text-align: center;
+        list-style: none;
+
+        &::-webkit-details-marker { display: none; }
+        &::marker { display: none; }
+        &:hover { color: $text-primary; }
+    }
+
+    .recalibrate-body {
+        margin-top: 12px;
+    }
+}
+
+// ----------------------------------------------------
+// 底部声明
+// ----------------------------------------------------
+.disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: $text-muted;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid $border-light;
 }

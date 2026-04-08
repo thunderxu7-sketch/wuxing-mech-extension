@@ -85,6 +85,16 @@ export interface PhysicalAnchorRecommendation {
     };
 }
 
+/**
+ * @description 每日灵符推荐结果
+ */
+export interface TalismanRecommendation {
+    id: string;
+    name: string;
+    blessing: string;
+    subtitle: string;
+}
+
 // --- 辅助数据和函数 ---
 
 const HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -358,6 +368,27 @@ export function getNftAnchorRecommendation(result: FortuneResult): NftAnchorReco
                 action: "五行平衡，保持观察，以稳健的土元素为主。",
                 keywords: ["持有稳定币", "头部蓝筹 NFT", "长期质押"],
             };
+    }
+}
+
+/**
+ * @description 根据运势结果匹配每日灵符。
+ * 策略：根据失衡元素推荐对应的灵符，帮助用户在心理层面"补"所缺能量。
+ */
+export function getDailyTalisman(result: FortuneResult): TalismanRecommendation {
+    switch (result.imbalanceElement) {
+        case 'gold':
+            return { id: 'zhaocai', name: '招财符', blessing: '财源滚滚 福运绵长', subtitle: '今日宜：聚财纳福' };
+        case 'wood':
+            return { id: 'shiye', name: '事业符', blessing: '事业繁荣 前程似锦', subtitle: '今日宜：开拓进取' };
+        case 'water':
+            return { id: 'zhihui', name: '智慧符', blessing: '智慧如光 映照万物', subtitle: '今日宜：静心思考' };
+        case 'fire':
+            return { id: 'pingan', name: '平安符', blessing: '岁岁平安 顺心如意', subtitle: '今日宜：修身养性' };
+        case 'earth':
+            return { id: 'fugui', name: '富贵符', blessing: '富贵双全 万事如意', subtitle: '今日宜：厚积薄发' };
+        default:
+            return { id: 'haoyun', name: '好运符', blessing: '万事顺心 好运自来', subtitle: '今日宜：随心而行' };
     }
 }
 
