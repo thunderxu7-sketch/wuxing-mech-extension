@@ -392,12 +392,10 @@ export function getDailyTalisman(result: FortuneResult): TalismanRecommendation 
     }
 }
 
+// TODO: 接入阿里妈妈淘宝客 API 后替换为带 PID 的推广链接
 const generateAffiliateLink = (keyword: string): string => {
     const query = encodeURIComponent(keyword);
-    
-    return `https://www.amazon.com/s?k=${query}&tag=wuxingdaily-20`;
-    
-    // return `https://s.taobao.com/search?q=${query}`;
+    return `https://s.taobao.com/search?q=${query}`;
 };
 
 /**
@@ -414,78 +412,78 @@ export function getPhysicalAnchorRecommendation(result: FortuneResult): Physical
             return {
                 themeColor: "红 / 黑 (火克金，水泻金)",
                 crystal: {
-                    name: "黑曜石 (Black Obsidian)",
-                    buyLink: generateAffiliateLink("Black Obsidian Bracelet")
+                    name: "黑曜石手链",
+                    buyLink: generateAffiliateLink("黑曜石手链")
                 },
                 tarotAdvice: "审视你的『宝剑』牌组，寻找行动与克制之间的平衡。",
                 lifestyle: {
-                    name: "红色香薰蜡烛 (Red Aromatherapy Candle)",
-                    buyLink: generateAffiliateLink("Red Aromatherapy Candle")
+                    name: "红色香薰蜡烛",
+                    buyLink: generateAffiliateLink("红色香薰蜡烛")
                 }
             };
         case 'wood':
             return {
                 themeColor: "白 / 红 (金克木，火泻木)",
                 crystal: {
-                    name: "白水晶簇 (Clear Quartz Cluster)",
-                    buyLink: generateAffiliateLink("Clear Quartz Cluster")
+                    name: "白水晶簇摆件",
+                    buyLink: generateAffiliateLink("白水晶簇摆件")
                 },
                 tarotAdvice: "关注『权杖』牌组的能量，将生发之力转化为具体行动。",
                 lifestyle: {
-                    name: "艺术画册 (Fine Art Book)",
-                    buyLink: generateAffiliateLink("Coffee Table Art Book")
+                    name: "艺术画册",
+                    buyLink: generateAffiliateLink("艺术画册 精装")
                 }
             };
         case 'water':
             return {
                 themeColor: "黄 / 紫 (土克水，金生水)",
                 crystal: {
-                    name: "黄水晶 (Citrine)",
-                    buyLink: generateAffiliateLink("Citrine Crystal Decor")
+                    name: "黄水晶摆件",
+                    buyLink: generateAffiliateLink("黄水晶摆件 招财")
                 },
                 tarotAdvice: "冥想与『五芒星』牌组，让财务和现实基础更加稳固。",
                 lifestyle: {
-                    name: "土象星座周边 (Earth Sign Zodiac Gifts)",
-                    buyLink: generateAffiliateLink("Capricorn Taurus Virgo Gifts")
+                    name: "星座周边礼物",
+                    buyLink: generateAffiliateLink("星座礼物 摩羯座 金牛座")
                 }
             };
         case 'fire':
             return {
                 themeColor: "蓝 / 绿 (水克火，木生火)",
                 crystal: {
-                    name: "青金石 (Lapis Lazuli)",
-                    buyLink: generateAffiliateLink("Lapis Lazuli Pendant")
+                    name: "青金石吊坠",
+                    buyLink: generateAffiliateLink("青金石吊坠")
                 },
                 tarotAdvice: "多加解读『圣杯』牌组，关注内心感受与情感交流，而非外部冲突。",
                 lifestyle: {
-                    name: "蓝色茶具 (Blue Tea Set)",
-                    buyLink: generateAffiliateLink("Blue Ceramic Tea Set")
+                    name: "蓝色陶瓷茶具",
+                    buyLink: generateAffiliateLink("蓝色陶瓷茶具套装")
                 }
             };
         case 'earth':
             return {
                 themeColor: "绿 / 白 (木克土，金泻土)",
                 crystal: {
-                    name: "孔雀石 (Malachite)",
-                    buyLink: generateAffiliateLink("Malachite Bracelet")
+                    name: "孔雀石手链",
+                    buyLink: generateAffiliateLink("孔雀石手链")
                 },
                 tarotAdvice: "通过『权杖』和『愚人』牌，鼓励自己打破现状，迎接改变。",
                 lifestyle: {
-                    name: "室内盆栽 (Indoor Bonsai)",
-                    buyLink: generateAffiliateLink("Indoor Bonsai Tree")
+                    name: "室内绿植盆栽",
+                    buyLink: generateAffiliateLink("室内盆栽 绿植 桌面")
                 }
             };
         default:
             return {
                 themeColor: "黄 / 金",
-                crystal: { 
-                    name: "白水晶 (Clear Quartz)", 
-                    buyLink: generateAffiliateLink("Clear Quartz Point") 
+                crystal: {
+                    name: "白水晶柱",
+                    buyLink: generateAffiliateLink("白水晶柱 天然")
                 },
                 tarotAdvice: "当前能量平衡，保持警觉，抽一张大阿卡那牌作为指引。",
-                lifestyle: { 
-                    name: "基础护肤品 (Skincare Set)", 
-                    buyLink: generateAffiliateLink("Skincare Gift Set") 
+                lifestyle: {
+                    name: "护肤套装礼盒",
+                    buyLink: generateAffiliateLink("护肤套装 礼盒")
                 }
             };
     }
