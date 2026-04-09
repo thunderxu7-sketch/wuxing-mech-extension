@@ -6,6 +6,12 @@ const USER_SIGNATURE_KEY = 'user_signature';
 const DAILY_CACHE_KEY = 'daily_fortune_cache';
 const USER_INPUT_KEY = 'user_input_birth';
 const LOCALE_KEY = 'user_locale';
+const SHARE_CONFIG_KEY = 'wuxing_share_config';
+
+export interface ShareConfig {
+    shareUrl: string;
+    shortUrl: string;
+}
 
 interface DailyFortuneCache {
     date: string;
@@ -162,4 +168,36 @@ export async function setLocale(locale: Locale): Promise<void> {
         return;
     }
     await chrome.storage.local.set({ [LOCALE_KEY]: locale });
+}
+
+function getDefaultShareConfig(): ShareConfig {
+    const fallbackUrl = 'https://github.com/thunderxu7-sketch/wuxing-mech-extension';
+
+    return {
+        shareUrl: fallbackUrl,
+        shortUrl: fallbackUrl,
+    };
+}
+
+/**
+ * 获取分享链接配置。
+ */
+export async function getShareConfig(): Promise<ShareConfig> {
+    const defaults = getDefaultShareConfig();
+
+    if (!hasExtensionStorage()) {
+        const localConfig = getLocal<Partial<ShareConfig>>(SHARE_CONFIG_KEY);
+        return {
+            shareUrl: localConfig?.shareUrl || defaults.shareUrl,
+            shortUrl: localConfig?.shortUrl || localConfig?.shareUrl || defaults.shortUrl,
+        };
+    }
+
+    const data = await chrome.storage.local.get(SHARE_CONFIG_KEY);
+    const storedConfig = data[SHARE_CONFIG_KEY] as Partial<ShareConfig> | undefined;
+
+    return {
+        shareUrl: storedConfig?.shareUrl || defaults.shareUrl,
+        shortUrl: storedConfig?.shortUrl || storedConfig?.shareUrl || defaults.shortUrl,
+    };
 }

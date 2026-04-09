@@ -42,6 +42,10 @@ export interface LocaleMessages {
     };
     share: {
         saveBtn: string;
+        copyBtn: string;
+        copySuccess: string;
+        copyError: string;
+        linkLabel: string;
         brandLine: string;
     };
     recalibrate: string;

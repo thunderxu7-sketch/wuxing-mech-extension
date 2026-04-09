@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas';
 import type { TalismanRecommendation } from '../../utils/algorithm';
 import type { Locale } from '../../locales/types';
+import { createShareQrDataUrl, getDisplayShareUrl } from './shareContent';
 
 interface ShareCardParams {
     talisman: TalismanRecommendation;
@@ -8,6 +9,8 @@ interface ShareCardParams {
     tarotAdvice: string;
     talismanImageSrc: string;
     locale: Locale;
+    shareUrl: string;
+    shortUrl: string;
 }
 
 const TITLES: Record<Locale, string> = {
@@ -29,12 +32,14 @@ function formatDate(locale: Locale): string {
 }
 
 export async function generateShareImage(params: ShareCardParams): Promise<void> {
-    const { talisman, score, tarotAdvice, talismanImageSrc, locale } = params;
+    const { talisman, score, tarotAdvice, talismanImageSrc, locale, shareUrl, shortUrl } = params;
 
     const dateStr = formatDate(locale);
     const title = TITLES[locale];
     const brandLine = BRAND_LINES[locale];
     const scoreColor = score >= 70 ? '#28a745' : score >= 50 ? '#d4a017' : '#dc3545';
+    const displayLink = getDisplayShareUrl(shortUrl, shareUrl);
+    const qrCodeDataUrl = await createShareQrDataUrl(displayLink);
 
     const card = document.createElement('div');
     card.style.cssText = `
@@ -81,6 +86,27 @@ export async function generateShareImage(params: ShareCardParams): Promise<void>
             width: 280px;
             box-sizing: border-box;
         ">"${tarotAdvice}"</div>
+        <div style="
+            width: 100%;
+            margin-top: 18px;
+            padding: 14px 16px;
+            box-sizing: border-box;
+            border: 1px solid #e0dcd0;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.72);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        ">
+            <img
+                src="${qrCodeDataUrl}"
+                style="width: 76px; height: 76px; border-radius: 6px; border: 1px solid #e0dcd0;"
+            />
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 11px; color: #999; letter-spacing: 1px; margin-bottom: 6px;">SCAN / OPEN</div>
+                <div style="font-size: 12px; color: #2c2c2c; line-height: 1.6; word-break: break-all;">${displayLink}</div>
+            </div>
+        </div>
         <div style="
             margin-top: 20px;
             border-top: 1px solid #e0dcd0;

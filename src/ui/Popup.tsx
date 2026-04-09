@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as chromeStorage from '../api/chromeStorage';
+import type { ShareConfig } from '../api/chromeStorage';
 import type {
     UserSignatureInput,
     UserSignature,
@@ -17,11 +18,13 @@ import {
 import {
     setStoredSignature,
     getDailyCache,
-    setDailyCache
+    setDailyCache,
+    getShareConfig,
 } from '../api/chromeStorage';
 import { hourToShichen, isValidCalendarDate } from '../utils/time';
 import { RadarChart } from './components/RadarChart';
 import { generateShareImage } from './utils/generateShareImage';
+import { buildShareCaption, copyTextToClipboard, getDisplayShareUrl } from './utils/shareContent';
 import { trackDAU, trackEvent } from '../api/analytics';
 import type { Locale, LocaleMessages } from '../locales/types';
 import { getMessages } from '../locales';
@@ -146,7 +149,18 @@ export const Popup: React.FC = () => {
     const [physicalRecommendation, setPhysicalRecommendation] = useState<PhysicalAnchorRecommendation | null>(null);
     const [detailExpanded, setDetailExpanded] = useState(false);
     const [showCeremony, setShowCeremony] = useState(false);
+    const [shareConfig, setShareConfigState] = useState<ShareConfig | null>(null);
+    const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
     const hasTrackedOnboardingView = useRef(false);
+    const copyFeedbackTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (copyFeedbackTimerRef.current !== null) {
+                window.clearTimeout(copyFeedbackTimerRef.current);
+            }
+        };
+    }, []);
 
     /** 切换语言 */
     const switchLocale = useCallback(async (newLocale: Locale) => {
@@ -211,9 +225,13 @@ export const Popup: React.FC = () => {
     useEffect(() => {
         async function loadData() {
             // 加载语言偏好
-            const savedLocale = await chromeStorage.getLocale();
+            const [savedLocale, savedShareConfig] = await Promise.all([
+                chromeStorage.getLocale(),
+                getShareConfig(),
+            ]);
             setLocaleState(savedLocale);
             setM(getMessages(savedLocale));
+            setShareConfigState(savedShareConfig);
             await trackDAU({ locale: savedLocale });
 
             // 非扩展环境 (本地开发) 使用模拟数据
@@ -261,6 +279,41 @@ export const Popup: React.FC = () => {
         ]);
         setShowCeremony(false);
     }, [calculateAndSetFortune, locale]);
+
+    const handleCopyCaption = useCallback(async () => {
+        if (!talisman || !fortuneResult || !shareConfig) {
+            return;
+        }
+
+        const caption = buildShareCaption({
+            locale,
+            talismanName: talisman.name,
+            subtitle: talisman.subtitle,
+            score: fortuneResult.score,
+            shareUrl: shareConfig.shareUrl,
+            shortUrl: shareConfig.shortUrl,
+        });
+
+        try {
+            await copyTextToClipboard(caption);
+            await trackEvent('share_copy', {
+                locale,
+                score: fortuneResult.score,
+                talisman_id: talisman.id,
+                share_url: shareConfig.shortUrl,
+            });
+            setCopyFeedback(m.share.copySuccess);
+        } catch {
+            setCopyFeedback(m.share.copyError);
+        }
+
+        if (copyFeedbackTimerRef.current !== null) {
+            window.clearTimeout(copyFeedbackTimerRef.current);
+        }
+        copyFeedbackTimerRef.current = window.setTimeout(() => {
+            setCopyFeedback(null);
+        }, 2200);
+    }, [fortuneResult, locale, m.share.copyError, m.share.copySuccess, shareConfig, talisman]);
 
     // --- 渲染 ---
 
@@ -435,26 +488,43 @@ export const Popup: React.FC = () => {
             )}
 
             {/* ====== 保存分享 ====== */}
-            {talisman && fortuneResult && physicalRecommendation && (
-                <button
-                    className="share-btn"
-                    onClick={async () => {
-                        await generateShareImage({
-                            talisman,
-                            score: fortuneResult.score,
-                            tarotAdvice: physicalRecommendation.tarotAdvice,
-                            talismanImageSrc: TALISMAN_IMAGES[talisman.id],
-                            locale,
-                        });
-                        await trackEvent('share_save', {
-                            locale,
-                            score: fortuneResult.score,
-                            talisman_id: talisman.id,
-                        });
-                    }}
-                >
-                    {m.share.saveBtn}
-                </button>
+            {talisman && fortuneResult && physicalRecommendation && shareConfig && (
+                <div className="share-section">
+                    <div className="share-link-card">
+                        <span className="share-link-label">{m.share.linkLabel}</span>
+                        <span className="share-link-value">
+                            {getDisplayShareUrl(shareConfig.shortUrl, shareConfig.shareUrl)}
+                        </span>
+                    </div>
+                    <div className="share-actions">
+                        <button
+                            className="share-btn"
+                            onClick={async () => {
+                                await generateShareImage({
+                                    talisman,
+                                    score: fortuneResult.score,
+                                    tarotAdvice: physicalRecommendation.tarotAdvice,
+                                    talismanImageSrc: TALISMAN_IMAGES[talisman.id],
+                                    locale,
+                                    shareUrl: shareConfig.shareUrl,
+                                    shortUrl: shareConfig.shortUrl,
+                                });
+                                await trackEvent('share_save', {
+                                    locale,
+                                    score: fortuneResult.score,
+                                    talisman_id: talisman.id,
+                                    share_url: shareConfig.shortUrl,
+                                });
+                            }}
+                        >
+                            {m.share.saveBtn}
+                        </button>
+                        <button className="share-btn share-btn-secondary" onClick={() => void handleCopyCaption()}>
+                            {m.share.copyBtn}
+                        </button>
+                    </div>
+                    {copyFeedback && <p className="share-feedback">{copyFeedback}</p>}
+                </div>
             )}
 
             {/* ====== 重新校准 (折叠) ====== */}

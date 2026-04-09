@@ -61,6 +61,10 @@ export const en: LocaleMessages = {
     },
     share: {
         saveBtn: 'Save Talisman Card',
+        copyBtn: 'Copy Share Caption',
+        copySuccess: 'Share caption copied',
+        copyError: 'Copy failed, please try again',
+        linkLabel: 'Share Link',
         brandLine: 'WuXing Calibrate · Daily Talisman',
     },
     recalibrate: 'Recalibrate Birth Elements',

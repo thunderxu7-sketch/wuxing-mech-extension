@@ -15,9 +15,11 @@
     "src/api/chromeStorage.ts",
     "src/api/analytics.ts",
     "src/locales/types.ts",
+    "src/types/qrcode.d.ts",
     "src/types/solarlunar.d.ts",
     "src/utils/algorithm.ts",
     "src/utils/time.ts",
+    "src/ui/utils/shareContent.ts",
     "tests/**/*.ts"
   ]
 }

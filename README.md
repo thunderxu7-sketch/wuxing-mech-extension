@@ -43,7 +43,23 @@ Current funnel events include:
 - `product_refresh`
 - `product_click`
 - `share_save`
+- `share_copy`
 - `locale_switch`
+
+## Share Config
+
+The share card reads a configurable landing URL and short link from storage:
+
+```js
+await chrome.storage.local.set({
+  wuxing_share_config: {
+    shareUrl: 'https://your-landing-page.example.com/wuxing',
+    shortUrl: 'https://wx.example/s/daily'
+  }
+})
+```
+
+If unset, the extension falls back to the project repository URL for both.
 
 ## Legacy Template Notes
 

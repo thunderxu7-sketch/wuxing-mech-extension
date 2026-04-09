@@ -18,6 +18,7 @@ export type AnalyticsEventName =
     | 'product_refresh'
     | 'product_click'
     | 'share_save'
+    | 'share_copy'
     | 'locale_switch';
 
 type AnalyticsPropertyValue = string | number | boolean | null;

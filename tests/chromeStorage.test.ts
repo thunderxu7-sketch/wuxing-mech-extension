@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import type { FortuneResult, UserSignature } from '../src/utils/algorithm';
-import { getDailyCache, getSignatureCacheKey, setDailyCache } from '../src/api/chromeStorage';
+import { getDailyCache, getShareConfig, getSignatureCacheKey, setDailyCache } from '../src/api/chromeStorage';
 
 function installChromeStorageMock() {
     const store: Record<string, unknown> = {};
@@ -80,6 +80,19 @@ test('daily cache only hits for the same signature on the same day', async () =>
         assert.equal(signatureMiss, null);
         assert.equal(expiredMiss, null);
         assert.equal(typeof store.daily_fortune_cache, 'object');
+    } finally {
+        uninstallChromeStorageMock();
+    }
+});
+
+test('share config falls back to the repository url when unset', async () => {
+    installChromeStorageMock();
+
+    try {
+        const config = await getShareConfig();
+
+        assert.equal(config.shareUrl, 'https://github.com/thunderxu7-sketch/wuxing-mech-extension');
+        assert.equal(config.shortUrl, 'https://github.com/thunderxu7-sketch/wuxing-mech-extension');
     } finally {
         uninstallChromeStorageMock();
     }

@@ -61,6 +61,10 @@ export const zh: LocaleMessages = {
     },
     share: {
         saveBtn: '保存今日灵符卡片',
+        copyBtn: '复制分享文案',
+        copySuccess: '分享文案已复制',
+        copyError: '复制失败，请稍后重试',
+        linkLabel: '分享短链',
         brandLine: '五行校准 · 每日灵符',
     },
     recalibrate: '重新校准本命五行',
