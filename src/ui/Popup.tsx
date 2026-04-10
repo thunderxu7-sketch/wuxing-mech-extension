@@ -25,7 +25,12 @@ import { hourToShichen, isValidCalendarDate } from '../utils/time';
 import { RadarChart } from './components/RadarChart';
 import { generateShareImage } from './utils/generateShareImage';
 import { buildShareCaption, copyTextToClipboard, getDisplayShareUrl } from './utils/shareContent';
-import { trackDAU, trackEvent } from '../api/analytics';
+import {
+    getAnalyticsPermissionStatus,
+    requestAnalyticsEndpointPermission,
+    trackDAU,
+    trackEvent,
+} from '../api/analytics';
 import type { Locale, LocaleMessages } from '../locales/types';
 import { getMessages } from '../locales';
 
@@ -151,6 +156,8 @@ export const Popup: React.FC = () => {
     const [showCeremony, setShowCeremony] = useState(false);
     const [shareConfig, setShareConfigState] = useState<ShareConfig | null>(null);
     const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+    const [analyticsPermissionNeeded, setAnalyticsPermissionNeeded] = useState(false);
+    const [analyticsPermissionGranted, setAnalyticsPermissionGranted] = useState(false);
     const hasTrackedOnboardingView = useRef(false);
     const copyFeedbackTimerRef = useRef<number | null>(null);
 
@@ -233,6 +240,13 @@ export const Popup: React.FC = () => {
             setM(getMessages(savedLocale));
             setShareConfigState(savedShareConfig);
             await trackDAU({ locale: savedLocale });
+            const permissionStatus = await getAnalyticsPermissionStatus();
+            setAnalyticsPermissionNeeded(
+                permissionStatus.enabled &&
+                permissionStatus.configured &&
+                !permissionStatus.granted,
+            );
+            setAnalyticsPermissionGranted(permissionStatus.enabled && permissionStatus.granted);
 
             // 非扩展环境 (本地开发) 使用模拟数据
             if (typeof chrome === 'undefined' || !chrome.storage) {
@@ -314,6 +328,17 @@ export const Popup: React.FC = () => {
             setCopyFeedback(null);
         }, 2200);
     }, [fortuneResult, locale, m.share.copyError, m.share.copySuccess, shareConfig, talisman]);
+
+    const handleGrantAnalyticsPermission = useCallback(async () => {
+        const status = await getAnalyticsPermissionStatus();
+        if (!status.endpoint) {
+            return;
+        }
+
+        const granted = await requestAnalyticsEndpointPermission(status.endpoint);
+        setAnalyticsPermissionNeeded(!granted);
+        setAnalyticsPermissionGranted(granted);
+    }, []);
 
     // --- 渲染 ---
 
@@ -484,6 +509,26 @@ export const Popup: React.FC = () => {
                             </a>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {analyticsPermissionNeeded && (
+                <div className="launch-card">
+                    <h4>{m.launch.analyticsPermissionTitle}</h4>
+                    <p>{m.launch.analyticsPermissionDesc}</p>
+                    <button
+                        type="button"
+                        className="launch-btn"
+                        onClick={() => void handleGrantAnalyticsPermission()}
+                    >
+                        {m.launch.analyticsPermissionBtn}
+                    </button>
+                </div>
+            )}
+
+            {!analyticsPermissionNeeded && analyticsPermissionGranted && (
+                <div className="launch-card launch-card--ok">
+                    <p>{m.launch.analyticsPermissionGranted}</p>
                 </div>
             )}
 

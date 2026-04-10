@@ -20,6 +20,8 @@ await chrome.storage.local.set({
 })
 ```
 
+After configuring the endpoint, open the popup once and grant the requested domain access when prompted. The extension uses optional host permissions so analytics delivery can be enabled without shipping fixed collector domains in the manifest.
+
 The collector receives JSON events with:
 
 - `name`
@@ -60,6 +62,23 @@ await chrome.storage.local.set({
 ```
 
 If unset, the extension falls back to the project repository URL for both.
+
+## Launch Checklist
+
+Before public launch, verify all of the following:
+
+1. Set `wuxing_share_config.shareUrl` and `wuxing_share_config.shortUrl` to your real landing page and short link.
+2. Set `wuxing_analytics_config.endpoint`, open the popup, and grant analytics domain access.
+3. Confirm collector events arrive for:
+   - `popup_open`
+   - `first_open`
+   - `fortune_generated`
+   - `share_save`
+   - `share_copy`
+   - `product_click`
+4. Save a share card and scan its QR code to ensure it opens the intended landing page.
+5. Trigger the daily notification once and confirm it opens the extension correctly.
+6. Replace this README's remaining template content with product-facing installation and usage docs.
 
 ## Legacy Template Notes
 

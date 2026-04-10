@@ -67,5 +67,11 @@ export const en: LocaleMessages = {
         linkLabel: 'Share Link',
         brandLine: 'WuXing Calibrate · Daily Talisman',
     },
+    launch: {
+        analyticsPermissionTitle: 'Enable Analytics Delivery',
+        analyticsPermissionDesc: 'An analytics endpoint is configured, but this extension does not yet have permission to reach that domain. Grant it before launch so events can be delivered.',
+        analyticsPermissionBtn: 'Grant Analytics Domain Access',
+        analyticsPermissionGranted: 'Analytics domain access granted',
+    },
     recalibrate: 'Recalibrate Birth Elements',
 };

@@ -388,6 +388,52 @@ h4 {
     margin-top: 4px;
 }
 
+.launch-card {
+    padding: 14px 16px;
+    border: 1px solid rgba($gold-accent, 0.28);
+    border-radius: 8px;
+    background: rgba(255, 248, 232, 0.88);
+
+    h4 {
+        margin: 0 0 6px 0;
+        color: $gold-accent-dark;
+    }
+
+    p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: $text-primary;
+    }
+}
+
+.launch-card--ok {
+    border-color: rgba($color-wood, 0.28);
+    background: rgba(232, 248, 237, 0.9);
+
+    p {
+        color: color.adjust($color-wood, $lightness: -15%);
+    }
+}
+
+.launch-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid $gold-accent;
+    border-radius: 6px;
+    background: rgba($gold-accent, 0.08);
+    color: $gold-accent-dark;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba($gold-accent, 0.16);
+    }
+}
+
 .products-header {
     display: flex;
     align-items: center;

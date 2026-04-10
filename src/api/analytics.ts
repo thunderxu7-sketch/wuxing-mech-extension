@@ -61,6 +61,14 @@ export interface AnalyticsStats {
     pendingEvents: number;
 }
 
+export interface AnalyticsPermissionStatus {
+    configured: boolean;
+    enabled: boolean;
+    endpoint: string;
+    originPattern: string | null;
+    granted: boolean;
+}
+
 const sessionId = createId();
 
 function hasExtensionStorage(): boolean {
@@ -89,6 +97,19 @@ function getDefaultConfig(): AnalyticsConfig {
         site: DEFAULT_SITE,
         enabled: false,
     };
+}
+
+function getOriginPattern(endpoint: string): string | null {
+    if (!endpoint) {
+        return null;
+    }
+
+    try {
+        const url = new URL(endpoint);
+        return `${url.origin}/*`;
+    } catch {
+        return null;
+    }
 }
 
 function pruneActiveDays(activeDays: string[]): string[] {
@@ -236,6 +257,11 @@ async function sendRemoteEvent(config: AnalyticsConfig, event: AnalyticsEnvelope
         return true;
     }
 
+    const hasPermission = await hasAnalyticsEndpointPermission(config.endpoint);
+    if (!hasPermission) {
+        return false;
+    }
+
     const body = JSON.stringify(event);
 
     if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
@@ -374,6 +400,49 @@ export async function clearAnalyticsConfig(): Promise<void> {
 
 export async function getAnalyticsConfig(): Promise<AnalyticsConfig> {
     return loadConfig();
+}
+
+export async function hasAnalyticsEndpointPermission(endpoint: string): Promise<boolean> {
+    const originPattern = getOriginPattern(endpoint);
+    if (!originPattern) {
+        return false;
+    }
+
+    if (!hasExtensionStorage() || typeof chrome.permissions === 'undefined') {
+        return true;
+    }
+
+    return chrome.permissions.contains({
+        origins: [originPattern],
+    });
+}
+
+export async function requestAnalyticsEndpointPermission(endpoint: string): Promise<boolean> {
+    const originPattern = getOriginPattern(endpoint);
+    if (!originPattern) {
+        return false;
+    }
+
+    if (!hasExtensionStorage() || typeof chrome.permissions === 'undefined') {
+        return true;
+    }
+
+    return chrome.permissions.request({
+        origins: [originPattern],
+    });
+}
+
+export async function getAnalyticsPermissionStatus(): Promise<AnalyticsPermissionStatus> {
+    const config = await loadConfig();
+    const originPattern = getOriginPattern(config.endpoint);
+
+    return {
+        configured: Boolean(config.endpoint),
+        enabled: config.enabled,
+        endpoint: config.endpoint,
+        originPattern,
+        granted: config.endpoint ? await hasAnalyticsEndpointPermission(config.endpoint) : true,
+    };
 }
 
 /** Get current local analytics stats plus pending remote queue size. */

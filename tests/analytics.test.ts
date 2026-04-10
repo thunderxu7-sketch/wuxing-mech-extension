@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+    getAnalyticsPermissionStatus,
     getAnalyticsConfig,
     getStats,
+    hasAnalyticsEndpointPermission,
+    requestAnalyticsEndpointPermission,
     setAnalyticsConfig,
     trackDAU,
 } from '../src/api/analytics';
 
 function installChromeStorageMock() {
     const store: Record<string, unknown> = {};
+    const grantedOrigins = new Set<string>();
     const chromeMock = {
         storage: {
             local: {
@@ -21,6 +25,17 @@ function installChromeStorageMock() {
                 },
             },
         },
+        permissions: {
+            async contains(details: { origins?: string[] }) {
+                return (details.origins || []).every((origin) => grantedOrigins.has(origin));
+            },
+            async request(details: { origins?: string[] }) {
+                for (const origin of details.origins || []) {
+                    grantedOrigins.add(origin);
+                }
+                return true;
+            },
+        },
     } as unknown as typeof chrome;
 
     Object.defineProperty(globalThis, 'chrome', {
@@ -28,7 +43,7 @@ function installChromeStorageMock() {
         value: chromeMock,
     });
 
-    return store;
+    return { store, grantedOrigins };
 }
 
 function uninstallChromeStorageMock() {
@@ -68,6 +83,7 @@ test('analytics persists config and flushes queued events on later success', asy
             site: 'test-site',
             endpoint: 'https://collector.example.com/events',
         });
+        await requestAnalyticsEndpointPermission('https://collector.example.com/events');
 
         const config = await getAnalyticsConfig();
         assert.deepEqual(config, {
@@ -98,6 +114,33 @@ test('analytics persists config and flushes queued events on later success', asy
         assert.equal((payloads[5] as { name: string }).name, 'return_visit');
     } finally {
         uninstallFetchMock();
+        uninstallChromeStorageMock();
+    }
+});
+
+test('analytics permission helpers derive and request endpoint origin access', async () => {
+    installChromeStorageMock();
+
+    try {
+        await setAnalyticsConfig({
+            enabled: true,
+            site: 'test-site',
+            endpoint: 'https://collector.example.com/events',
+        });
+
+        assert.equal(await hasAnalyticsEndpointPermission('https://collector.example.com/events'), false);
+
+        const statusBefore = await getAnalyticsPermissionStatus();
+        assert.equal(statusBefore.originPattern, 'https://collector.example.com/*');
+        assert.equal(statusBefore.granted, false);
+
+        const granted = await requestAnalyticsEndpointPermission('https://collector.example.com/events');
+        assert.equal(granted, true);
+        assert.equal(await hasAnalyticsEndpointPermission('https://collector.example.com/events'), true);
+
+        const statusAfter = await getAnalyticsPermissionStatus();
+        assert.equal(statusAfter.granted, true);
+    } finally {
         uninstallChromeStorageMock();
     }
 });

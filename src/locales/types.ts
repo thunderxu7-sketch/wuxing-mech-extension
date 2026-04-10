@@ -48,5 +48,11 @@ export interface LocaleMessages {
         linkLabel: string;
         brandLine: string;
     };
+    launch: {
+        analyticsPermissionTitle: string;
+        analyticsPermissionDesc: string;
+        analyticsPermissionBtn: string;
+        analyticsPermissionGranted: string;
+    };
     recalibrate: string;
 }

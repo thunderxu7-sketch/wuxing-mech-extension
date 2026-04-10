@@ -67,5 +67,11 @@ export const zh: LocaleMessages = {
         linkLabel: '分享短链',
         brandLine: '五行校准 · 每日灵符',
     },
+    launch: {
+        analyticsPermissionTitle: '启用数据回传',
+        analyticsPermissionDesc: '已配置 analytics endpoint，但当前还没有该域名的访问授权。上线前请先点一次授权，确保事件能成功回传。',
+        analyticsPermissionBtn: '授权 Analytics 域名',
+        analyticsPermissionGranted: 'Analytics 域名授权已开启',
+    },
     recalibrate: '重新校准本命五行',
 };
