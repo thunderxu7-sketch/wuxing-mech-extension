@@ -85,14 +85,16 @@ test('daily cache only hits for the same signature on the same day', async () =>
     }
 });
 
-test('share config falls back to the repository url when unset', async () => {
+test('share config falls back to the default landing page when unset', async () => {
     installChromeStorageMock();
+
+    const expected = 'https://wuxing-mech-landing.pages.dev/?utm_source=extension&utm_medium=share';
 
     try {
         const config = await getShareConfig();
 
-        assert.equal(config.shareUrl, 'https://github.com/thunderxu7-sketch/wuxing-mech-extension');
-        assert.equal(config.shortUrl, 'https://github.com/thunderxu7-sketch/wuxing-mech-extension');
+        assert.equal(config.shareUrl, expected);
+        assert.equal(config.shortUrl, expected);
     } finally {
         uninstallChromeStorageMock();
     }

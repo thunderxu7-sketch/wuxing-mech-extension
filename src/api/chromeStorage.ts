@@ -1,6 +1,7 @@
 // src/api/chromeStorage.ts
 import type { UserSignature, UserSignatureInput, FortuneResult } from '../utils/algorithm';
 import type { Locale } from '../locales/types';
+import { DEFAULT_SHARE_URL, DEFAULT_SHORT_URL } from '../config/share';
 
 const USER_SIGNATURE_KEY = 'user_signature';
 const DAILY_CACHE_KEY = 'daily_fortune_cache';
@@ -171,11 +172,9 @@ export async function setLocale(locale: Locale): Promise<void> {
 }
 
 function getDefaultShareConfig(): ShareConfig {
-    const fallbackUrl = 'https://github.com/thunderxu7-sketch/wuxing-mech-extension';
-
     return {
-        shareUrl: fallbackUrl,
-        shortUrl: fallbackUrl,
+        shareUrl: DEFAULT_SHARE_URL,
+        shortUrl: DEFAULT_SHORT_URL,
     };
 }
 
