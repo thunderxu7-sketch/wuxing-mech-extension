@@ -1,8 +1,14 @@
+import {
+    DEFAULT_ANALYTICS_ENABLED,
+    DEFAULT_ANALYTICS_ENDPOINT,
+    DEFAULT_ANALYTICS_SITE,
+} from '../config/analytics';
+
 const ANALYTICS_KEY = 'wuxing_analytics';
 const ANALYTICS_META_KEY = 'wuxing_analytics_meta';
 const ANALYTICS_CONFIG_KEY = 'wuxing_analytics_config';
 const ANALYTICS_QUEUE_KEY = 'wuxing_analytics_queue';
-const DEFAULT_SITE = 'wuxing-mech-extension';
+const DEFAULT_SITE = DEFAULT_ANALYTICS_SITE;
 const MAX_DAILY_RETENTION = 90;
 const MAX_QUEUE_SIZE = 50;
 
@@ -107,9 +113,9 @@ function today(now: Date = new Date()): string {
 
 function getDefaultConfig(): AnalyticsConfig {
     return {
-        endpoint: '',
+        endpoint: DEFAULT_ANALYTICS_ENDPOINT,
         site: DEFAULT_SITE,
-        enabled: false,
+        enabled: DEFAULT_ANALYTICS_ENABLED,
     };
 }
 
