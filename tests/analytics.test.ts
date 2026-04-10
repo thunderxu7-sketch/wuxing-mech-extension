@@ -4,11 +4,14 @@ import test from 'node:test';
 import {
     getAnalyticsPermissionStatus,
     getAnalyticsConfig,
+    getAnalyticsOriginPattern,
     getStats,
     hasAnalyticsEndpointPermission,
     requestAnalyticsEndpointPermission,
+    retryQueuedAnalyticsEvents,
     setAnalyticsConfig,
     trackDAU,
+    verifyAnalyticsCollector,
 } from '../src/api/analytics';
 
 function installChromeStorageMock() {
@@ -141,6 +144,66 @@ test('analytics permission helpers derive and request endpoint origin access', a
         const statusAfter = await getAnalyticsPermissionStatus();
         assert.equal(statusAfter.granted, true);
     } finally {
+        uninstallChromeStorageMock();
+    }
+});
+
+test('analytics launch helpers validate origin access and deliver a probe event', async () => {
+    installChromeStorageMock();
+    const payloads = installFetchMock([true]);
+
+    try {
+        await setAnalyticsConfig({
+            enabled: true,
+            site: 'test-site',
+            endpoint: ' https://collector.example.com/events ',
+        });
+
+        assert.equal(getAnalyticsOriginPattern(' https://collector.example.com/events '), 'https://collector.example.com/*');
+
+        const blocked = await verifyAnalyticsCollector(new Date('2026-04-10T09:00:00.000Z'));
+        assert.equal(blocked.status, 'missing_permission');
+
+        await requestAnalyticsEndpointPermission('https://collector.example.com/events');
+
+        const delivered = await verifyAnalyticsCollector(new Date('2026-04-10T09:01:00.000Z'));
+        assert.equal(delivered.status, 'delivered');
+        assert.equal(payloads.length, 1);
+        assert.equal((payloads[0] as { name: string }).name, 'analytics_probe');
+    } finally {
+        uninstallFetchMock();
+        uninstallChromeStorageMock();
+    }
+});
+
+test('queued analytics events can be retried after permission is granted', async () => {
+    installChromeStorageMock();
+    const payloads = installFetchMock([true, true]);
+
+    try {
+        await setAnalyticsConfig({
+            enabled: true,
+            site: 'test-site',
+            endpoint: 'https://collector.example.com/events',
+        });
+
+        await trackDAU({ locale: 'zh' }, new Date('2026-04-10T09:00:00.000Z'));
+        const beforeRetry = await getStats();
+        assert.equal(beforeRetry.pendingEvents, 2);
+
+        const blockedRetry = await retryQueuedAnalyticsEvents();
+        assert.equal(blockedRetry.status, 'missing_permission');
+        assert.equal(blockedRetry.pendingAfter, 2);
+
+        await requestAnalyticsEndpointPermission('https://collector.example.com/events');
+
+        const flushed = await retryQueuedAnalyticsEvents();
+        assert.equal(flushed.status, 'flushed');
+        assert.equal(flushed.delivered, 2);
+        assert.equal(flushed.pendingAfter, 0);
+        assert.equal(payloads.length, 2);
+    } finally {
+        uninstallFetchMock();
         uninstallChromeStorageMock();
     }
 });

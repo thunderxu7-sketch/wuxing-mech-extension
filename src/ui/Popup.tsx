@@ -30,10 +30,16 @@ import { RadarChart } from './components/RadarChart';
 import { generateShareImage } from './utils/generateShareImage';
 import { buildShareCaption, copyTextToClipboard, getDisplayShareUrl } from './utils/shareContent';
 import {
+    getAnalyticsConfig,
+    getAnalyticsOriginPattern,
     getAnalyticsPermissionStatus,
+    getStats,
+    retryQueuedAnalyticsEvents,
     requestAnalyticsEndpointPermission,
+    setAnalyticsConfig,
     trackDAU,
     trackEvent,
+    verifyAnalyticsCollector,
 } from '../api/analytics';
 import type { Locale, LocaleMessages } from '../locales/types';
 import { getMessages } from '../locales';
@@ -157,6 +163,14 @@ export const Popup: React.FC = () => {
     const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
     const [analyticsPermissionNeeded, setAnalyticsPermissionNeeded] = useState(false);
     const [analyticsPermissionGranted, setAnalyticsPermissionGranted] = useState(false);
+    const [analyticsDraft, setAnalyticsDraft] = useState({
+        enabled: false,
+        site: 'wuxing-mech-extension',
+        endpoint: '',
+    });
+    const [analyticsQueueCount, setAnalyticsQueueCount] = useState(0);
+    const [analyticsFeedback, setAnalyticsFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+    const [analyticsBusy, setAnalyticsBusy] = useState(false);
     const hasTrackedOnboardingView = useRef(false);
     const copyFeedbackTimerRef = useRef<number | null>(null);
 
@@ -227,25 +241,206 @@ export const Popup: React.FC = () => {
         applyFortuneResult(result, loc, 'fresh');
     }, [applyFortuneResult]);
 
+    const refreshAnalyticsState = useCallback(async (syncDraft = false) => {
+        const [config, permissionStatus, stats] = await Promise.all([
+            getAnalyticsConfig(),
+            getAnalyticsPermissionStatus(),
+            getStats(),
+        ]);
+
+        if (syncDraft) {
+            setAnalyticsDraft(config);
+        }
+
+        setAnalyticsPermissionNeeded(
+            permissionStatus.enabled &&
+            permissionStatus.configured &&
+            !permissionStatus.granted,
+        );
+        setAnalyticsPermissionGranted(permissionStatus.enabled && permissionStatus.granted);
+        setAnalyticsQueueCount(stats.pendingEvents);
+    }, []);
+
+    const persistAnalyticsConfig = useCallback(async () => {
+        const trimmedEndpoint = analyticsDraft.endpoint.trim();
+
+        if (trimmedEndpoint && !getAnalyticsOriginPattern(trimmedEndpoint)) {
+            setAnalyticsFeedback({ tone: 'error', message: m.launch.invalidEndpointError });
+            return null;
+        }
+
+        if (analyticsDraft.enabled && !trimmedEndpoint) {
+            setAnalyticsFeedback({ tone: 'error', message: m.launch.invalidEndpointError });
+            return null;
+        }
+
+        const savedConfig = await setAnalyticsConfig({
+            ...analyticsDraft,
+            endpoint: trimmedEndpoint,
+        });
+
+        setAnalyticsDraft(savedConfig);
+        await refreshAnalyticsState();
+        return savedConfig;
+    }, [analyticsDraft, m.launch.invalidEndpointError, refreshAnalyticsState]);
+
+    const handleSaveAnalyticsConfig = useCallback(async () => {
+        setAnalyticsBusy(true);
+
+        try {
+            const savedConfig = await persistAnalyticsConfig();
+            if (!savedConfig) {
+                return;
+            }
+
+            setAnalyticsFeedback({ tone: 'success', message: m.launch.saveSuccess });
+        } finally {
+            setAnalyticsBusy(false);
+        }
+    }, [m.launch.saveSuccess, persistAnalyticsConfig]);
+
+    const handleGrantAnalyticsPermission = useCallback(async () => {
+        setAnalyticsBusy(true);
+
+        try {
+            const savedConfig = await persistAnalyticsConfig();
+            if (!savedConfig) {
+                return;
+            }
+
+            if (!savedConfig.endpoint) {
+                setAnalyticsFeedback({ tone: 'error', message: m.launch.invalidEndpointError });
+                return;
+            }
+
+            const granted = await requestAnalyticsEndpointPermission(savedConfig.endpoint);
+            await refreshAnalyticsState();
+            setAnalyticsFeedback({
+                tone: granted ? 'success' : 'error',
+                message: granted ? m.launch.analyticsPermissionGranted : m.launch.verifyPermissionError,
+            });
+        } finally {
+            setAnalyticsBusy(false);
+        }
+    }, [
+        m.launch.analyticsPermissionGranted,
+        m.launch.invalidEndpointError,
+        m.launch.verifyPermissionError,
+        persistAnalyticsConfig,
+        refreshAnalyticsState,
+    ]);
+
+    const handleVerifyAnalyticsCollector = useCallback(async () => {
+        setAnalyticsBusy(true);
+
+        try {
+            const savedConfig = await persistAnalyticsConfig();
+            if (!savedConfig) {
+                return;
+            }
+
+            const result = await verifyAnalyticsCollector();
+            await refreshAnalyticsState();
+
+            if (result.status === 'delivered') {
+                setAnalyticsFeedback({ tone: 'success', message: m.launch.verifySuccess });
+                return;
+            }
+
+            if (result.status === 'missing_permission') {
+                setAnalyticsFeedback({ tone: 'error', message: m.launch.verifyPermissionError });
+                return;
+            }
+
+            if (result.status === 'disabled') {
+                setAnalyticsFeedback({ tone: 'error', message: m.launch.verifyDisabledError });
+                return;
+            }
+
+            if (result.status === 'missing_endpoint' || result.status === 'invalid_endpoint') {
+                setAnalyticsFeedback({ tone: 'error', message: m.launch.verifyEndpointError });
+                return;
+            }
+
+            setAnalyticsFeedback({ tone: 'error', message: m.launch.verifyNetworkError });
+        } finally {
+            setAnalyticsBusy(false);
+        }
+    }, [
+        m.launch.verifyDisabledError,
+        m.launch.verifyEndpointError,
+        m.launch.verifyNetworkError,
+        m.launch.verifyPermissionError,
+        m.launch.verifySuccess,
+        persistAnalyticsConfig,
+        refreshAnalyticsState,
+    ]);
+
+    const handleRetryQueuedAnalytics = useCallback(async () => {
+        setAnalyticsBusy(true);
+
+        try {
+            const savedConfig = await persistAnalyticsConfig();
+            if (!savedConfig) {
+                return;
+            }
+
+            const result = await retryQueuedAnalyticsEvents();
+            await refreshAnalyticsState();
+
+            if (result.status === 'flushed' || result.status === 'empty') {
+                setAnalyticsFeedback({ tone: 'success', message: m.launch.retrySuccess });
+                return;
+            }
+
+            if (result.status === 'missing_permission') {
+                setAnalyticsFeedback({ tone: 'error', message: m.launch.verifyPermissionError });
+                return;
+            }
+
+            if (result.status === 'disabled') {
+                setAnalyticsFeedback({ tone: 'error', message: m.launch.verifyDisabledError });
+                return;
+            }
+
+            if (result.status === 'missing_endpoint' || result.status === 'invalid_endpoint') {
+                setAnalyticsFeedback({ tone: 'error', message: m.launch.verifyEndpointError });
+                return;
+            }
+
+            setAnalyticsFeedback({
+                tone: 'error',
+                message: result.status === 'partial' ? m.launch.retryPartial : m.launch.verifyNetworkError,
+            });
+        } finally {
+            setAnalyticsBusy(false);
+        }
+    }, [
+        m.launch.retryPartial,
+        m.launch.retrySuccess,
+        m.launch.verifyDisabledError,
+        m.launch.verifyEndpointError,
+        m.launch.verifyNetworkError,
+        m.launch.verifyPermissionError,
+        persistAnalyticsConfig,
+        refreshAnalyticsState,
+    ]);
+
     // 初始加载
     useEffect(() => {
         async function loadData() {
             // 加载语言偏好
-            const [savedLocale, savedShareConfig] = await Promise.all([
+            const [savedLocale, savedShareConfig, savedAnalyticsConfig] = await Promise.all([
                 chromeStorage.getLocale(),
                 getShareConfig(),
+                getAnalyticsConfig(),
             ]);
             setLocaleState(savedLocale);
             setM(getMessages(savedLocale));
             setShareConfigState(savedShareConfig);
+            setAnalyticsDraft(savedAnalyticsConfig);
             await trackDAU({ locale: savedLocale });
-            const permissionStatus = await getAnalyticsPermissionStatus();
-            setAnalyticsPermissionNeeded(
-                permissionStatus.enabled &&
-                permissionStatus.configured &&
-                !permissionStatus.granted,
-            );
-            setAnalyticsPermissionGranted(permissionStatus.enabled && permissionStatus.granted);
+            await refreshAnalyticsState();
 
             // 非扩展环境 (本地开发) 使用模拟数据
             if (typeof chrome === 'undefined' || !chrome.storage) {
@@ -266,7 +461,7 @@ export const Popup: React.FC = () => {
             setIsLoading(false);
         }
         loadData();
-    }, [calculateAndSetFortune]);
+    }, [calculateAndSetFortune, refreshAnalyticsState]);
 
     useEffect(() => {
         if (!isLoading && !userSignature && !hasTrackedOnboardingView.current) {
@@ -328,17 +523,6 @@ export const Popup: React.FC = () => {
         }, 2200);
     }, [fortuneResult, locale, m.share.copyError, m.share.copySuccess, shareConfig, talisman]);
 
-    const handleGrantAnalyticsPermission = useCallback(async () => {
-        const status = await getAnalyticsPermissionStatus();
-        if (!status.endpoint) {
-            return;
-        }
-
-        const granted = await requestAnalyticsEndpointPermission(status.endpoint);
-        setAnalyticsPermissionNeeded(!granted);
-        setAnalyticsPermissionGranted(granted);
-    }, []);
-
     // --- 渲染 ---
 
     // 语言切换按钮
@@ -349,6 +533,85 @@ export const Popup: React.FC = () => {
         >
             {locale === 'zh' ? 'EN' : '中'}
         </button>
+    );
+
+    const analyticsOrigin = getAnalyticsOriginPattern(analyticsDraft.endpoint);
+    const AnalyticsSettings = (
+        <details className="launch-settings">
+            <summary>{m.launch.settingsSummary}</summary>
+            <div className="launch-settings-body">
+                <div className="launch-card">
+                    <h4>{m.launch.settingsTitle}</h4>
+                    <p>{m.launch.settingsDesc}</p>
+
+                    <label className="launch-toggle">
+                        <input
+                            type="checkbox"
+                            checked={analyticsDraft.enabled}
+                            onChange={(e) => setAnalyticsDraft(prev => ({ ...prev, enabled: e.target.checked }))}
+                        />
+                        <span>{m.launch.enabledLabel}</span>
+                    </label>
+
+                    <div className="launch-form">
+                        <label className="launch-field">
+                            <span>{m.launch.siteLabel}</span>
+                            <input
+                                type="text"
+                                value={analyticsDraft.site}
+                                onChange={(e) => setAnalyticsDraft(prev => ({ ...prev, site: e.target.value }))}
+                                placeholder="wuxing-extension"
+                            />
+                        </label>
+                        <label className="launch-field">
+                            <span>{m.launch.endpointLabel}</span>
+                            <input
+                                type="url"
+                                value={analyticsDraft.endpoint}
+                                onChange={(e) => setAnalyticsDraft(prev => ({ ...prev, endpoint: e.target.value }))}
+                                placeholder="https://collector.example.com/events"
+                            />
+                        </label>
+                    </div>
+
+                    <div className="launch-status-grid">
+                        <div className="launch-status-item">
+                            <span>{m.launch.originLabel}</span>
+                            <strong>{analyticsOrigin || m.launch.statusNotConfigured}</strong>
+                        </div>
+                        <div className="launch-status-item">
+                            <span>{m.launch.permissionLabel}</span>
+                            <strong>{analyticsPermissionGranted ? m.launch.analyticsPermissionGranted : m.launch.permissionMissing}</strong>
+                        </div>
+                        <div className="launch-status-item">
+                            <span>{m.launch.queueLabel}</span>
+                            <strong>{analyticsQueueCount === 0 ? m.launch.queueEmpty : String(analyticsQueueCount)}</strong>
+                        </div>
+                    </div>
+
+                    {analyticsFeedback && (
+                        <p className={`launch-feedback launch-feedback--${analyticsFeedback.tone}`}>
+                            {analyticsFeedback.message}
+                        </p>
+                    )}
+
+                    <div className="launch-actions">
+                        <button type="button" className="launch-btn" onClick={() => void handleSaveAnalyticsConfig()} disabled={analyticsBusy}>
+                            {m.launch.saveBtn}
+                        </button>
+                        <button type="button" className="launch-btn" onClick={() => void handleGrantAnalyticsPermission()} disabled={analyticsBusy}>
+                            {m.launch.analyticsPermissionBtn}
+                        </button>
+                        <button type="button" className="launch-btn" onClick={() => void handleVerifyAnalyticsCollector()} disabled={analyticsBusy}>
+                            {m.launch.verifyBtn}
+                        </button>
+                        <button type="button" className="launch-btn" onClick={() => void handleRetryQueuedAnalytics()} disabled={analyticsBusy}>
+                            {m.launch.retryQueueBtn}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </details>
     );
 
     // 校准仪式动画
@@ -387,6 +650,7 @@ export const Popup: React.FC = () => {
                     isLoading={isLoading}
                     m={m}
                 />
+                {AnalyticsSettings}
             </div>
         );
     }
@@ -530,6 +794,8 @@ export const Popup: React.FC = () => {
                     <p>{m.launch.analyticsPermissionGranted}</p>
                 </div>
             )}
+
+            {AnalyticsSettings}
 
             {/* ====== 保存分享 ====== */}
             {talisman && fortuneResult && physicalRecommendation && shareConfig && (

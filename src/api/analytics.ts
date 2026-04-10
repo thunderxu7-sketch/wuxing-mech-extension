@@ -10,6 +10,7 @@ export type AnalyticsEventName =
     | 'popup_open'
     | 'first_open'
     | 'return_visit'
+    | 'analytics_probe'
     | 'onboarding_view'
     | 'birth_submit'
     | 'fortune_generated'
@@ -69,6 +70,19 @@ export interface AnalyticsPermissionStatus {
     granted: boolean;
 }
 
+export interface AnalyticsVerificationResult {
+    status: 'delivered' | 'disabled' | 'missing_endpoint' | 'invalid_endpoint' | 'missing_permission' | 'network_error';
+    endpoint: string;
+    originPattern: string | null;
+}
+
+export interface AnalyticsQueueRetryResult {
+    status: 'empty' | 'flushed' | 'partial' | 'disabled' | 'missing_endpoint' | 'invalid_endpoint' | 'missing_permission' | 'network_error';
+    pendingBefore: number;
+    pendingAfter: number;
+    delivered: number;
+}
+
 const sessionId = createId();
 
 function hasExtensionStorage(): boolean {
@@ -110,6 +124,17 @@ function getOriginPattern(endpoint: string): string | null {
     } catch {
         return null;
     }
+}
+
+function sanitizeConfig(config: AnalyticsConfig): AnalyticsConfig {
+    const endpoint = config.endpoint.trim();
+    const site = config.site.trim() || DEFAULT_SITE;
+
+    return {
+        ...config,
+        endpoint,
+        site,
+    };
 }
 
 function pruneActiveDays(activeDays: string[]): string[] {
@@ -207,7 +232,7 @@ async function loadMeta(now: Date = new Date()): Promise<{ meta: AnalyticsMeta; 
 
 async function loadConfig(): Promise<AnalyticsConfig> {
     const config = await loadFromStorage<AnalyticsConfig>(ANALYTICS_CONFIG_KEY);
-    return config ? { ...getDefaultConfig(), ...config } : getDefaultConfig();
+    return sanitizeConfig(config ? { ...getDefaultConfig(), ...config } : getDefaultConfig());
 }
 
 async function loadQueue(): Promise<AnalyticsEnvelope[]> {
@@ -383,11 +408,11 @@ export async function trackEvent(
 }
 
 export async function setAnalyticsConfig(config: Partial<AnalyticsConfig>): Promise<AnalyticsConfig> {
-    const nextConfig = {
+    const nextConfig = sanitizeConfig({
         ...getDefaultConfig(),
         ...(await loadConfig()),
         ...config,
-    };
+    });
 
     await saveToStorage(ANALYTICS_CONFIG_KEY, nextConfig);
     return nextConfig;
@@ -400,6 +425,10 @@ export async function clearAnalyticsConfig(): Promise<void> {
 
 export async function getAnalyticsConfig(): Promise<AnalyticsConfig> {
     return loadConfig();
+}
+
+export function getAnalyticsOriginPattern(endpoint: string): string | null {
+    return getOriginPattern(endpoint.trim());
 }
 
 export async function hasAnalyticsEndpointPermission(endpoint: string): Promise<boolean> {
@@ -442,6 +471,121 @@ export async function getAnalyticsPermissionStatus(): Promise<AnalyticsPermissio
         endpoint: config.endpoint,
         originPattern,
         granted: config.endpoint ? await hasAnalyticsEndpointPermission(config.endpoint) : true,
+    };
+}
+
+export async function verifyAnalyticsCollector(now: Date = new Date()): Promise<AnalyticsVerificationResult> {
+    const config = await loadConfig();
+    const originPattern = getOriginPattern(config.endpoint);
+
+    if (!config.enabled) {
+        return {
+            status: 'disabled',
+            endpoint: config.endpoint,
+            originPattern,
+        };
+    }
+
+    if (!config.endpoint) {
+        return {
+            status: 'missing_endpoint',
+            endpoint: config.endpoint,
+            originPattern,
+        };
+    }
+
+    if (!originPattern) {
+        return {
+            status: 'invalid_endpoint',
+            endpoint: config.endpoint,
+            originPattern,
+        };
+    }
+
+    if (!await hasAnalyticsEndpointPermission(config.endpoint)) {
+        return {
+            status: 'missing_permission',
+            endpoint: config.endpoint,
+            originPattern,
+        };
+    }
+
+    const { meta } = await loadMeta(now);
+    const delivered = await sendRemoteEvent(
+        config,
+        buildEnvelope(meta, config, 'analytics_probe', {
+            probe: true,
+            source: 'manual_verify',
+        }, now),
+    );
+
+    return {
+        status: delivered ? 'delivered' : 'network_error',
+        endpoint: config.endpoint,
+        originPattern,
+    };
+}
+
+export async function retryQueuedAnalyticsEvents(): Promise<AnalyticsQueueRetryResult> {
+    const [config, pending] = await Promise.all([loadConfig(), loadQueue()]);
+    const originPattern = getOriginPattern(config.endpoint);
+    const pendingBefore = pending.length;
+
+    if (pendingBefore === 0) {
+        return {
+            status: 'empty',
+            pendingBefore,
+            pendingAfter: 0,
+            delivered: 0,
+        };
+    }
+
+    if (!config.enabled) {
+        return {
+            status: 'disabled',
+            pendingBefore,
+            pendingAfter: pendingBefore,
+            delivered: 0,
+        };
+    }
+
+    if (!config.endpoint) {
+        return {
+            status: 'missing_endpoint',
+            pendingBefore,
+            pendingAfter: pendingBefore,
+            delivered: 0,
+        };
+    }
+
+    if (!originPattern) {
+        return {
+            status: 'invalid_endpoint',
+            pendingBefore,
+            pendingAfter: pendingBefore,
+            delivered: 0,
+        };
+    }
+
+    if (!await hasAnalyticsEndpointPermission(config.endpoint)) {
+        return {
+            status: 'missing_permission',
+            pendingBefore,
+            pendingAfter: pendingBefore,
+            delivered: 0,
+        };
+    }
+
+    await flushRemoteQueue(config, []);
+    const remaining = await loadQueue();
+    const pendingAfter = remaining.length;
+    const delivered = pendingBefore - pendingAfter;
+
+    return {
+        status: pendingAfter === 0 ? 'flushed' : (delivered > 0 ? 'partial' : 'network_error'),
+        pendingBefore,
+        pendingAfter,
+        delivered,
     };
 }
 

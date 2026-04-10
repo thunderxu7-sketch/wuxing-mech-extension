@@ -416,6 +416,114 @@ h4 {
     }
 }
 
+.launch-settings {
+    border-top: 1px solid $border-warm;
+    padding-top: 12px;
+
+    summary {
+        font-size: 13px;
+        color: $text-secondary;
+        cursor: pointer;
+        text-align: center;
+        list-style: none;
+
+        &::-webkit-details-marker { display: none; }
+        &::marker { display: none; }
+        &:hover { color: $text-primary; }
+    }
+}
+
+.launch-settings-body {
+    margin-top: 12px;
+}
+
+.launch-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: $text-primary;
+}
+
+.launch-form {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.launch-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    span {
+        font-size: 12px;
+        color: $text-secondary;
+    }
+
+    input {
+        padding: 8px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 13px;
+        width: 100%;
+        box-sizing: border-box;
+        font-family: inherit;
+        background: $bg-card;
+
+        &:focus {
+            outline: none;
+            border-color: $gold-accent;
+            box-shadow: 0 0 0 2px rgba($gold-accent, 0.2);
+        }
+    }
+}
+
+.launch-status-grid {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.launch-status-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+
+    span {
+        color: $text-secondary;
+    }
+
+    strong {
+        color: $text-primary;
+        text-align: right;
+        word-break: break-all;
+    }
+}
+
+.launch-feedback {
+    margin: 12px 0 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.launch-feedback--success {
+    color: color.adjust($color-wood, $lightness: -15%);
+}
+
+.launch-feedback--error {
+    color: color.adjust($color-fire, $lightness: -10%);
+}
+
+.launch-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+
 .launch-btn {
     margin-top: 10px;
     width: 100%;

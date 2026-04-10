@@ -7,8 +7,18 @@ The extension now supports dual-write analytics:
 - Local stats remain available in storage for debugging.
 - Remote delivery is optional and can be enabled by setting an analytics endpoint.
 - Failed remote sends are queued locally and retried on later events.
+- The popup now includes a launch-only collector panel for saving config, granting domain access, sending a probe event, and retrying queued events.
 
-You can configure the remote collector from the extension console:
+Recommended setup flow:
+
+1. Open the popup.
+2. Expand `Launch Config & Delivery Checks`.
+3. Enable remote delivery, enter `site` and `endpoint`, then save.
+4. Grant analytics domain access for the collector origin.
+5. Send a probe event and confirm it arrives.
+6. If any events were queued before permission or collector setup, use `Retry Queued Events`.
+
+If you still want to configure the remote collector from the extension console:
 
 ```js
 await chrome.storage.local.set({
@@ -48,6 +58,8 @@ Current funnel events include:
 - `share_copy`
 - `locale_switch`
 
+Operational verification uses an additional `analytics_probe` event that is sent only when you click the popup's probe button.
+
 ## Share Config
 
 The share card reads a configurable landing URL and short link from storage:
@@ -68,7 +80,7 @@ If unset, the extension falls back to the project repository URL for both.
 Before public launch, verify all of the following:
 
 1. Set `wuxing_share_config.shareUrl` and `wuxing_share_config.shortUrl` to your real landing page and short link.
-2. Set `wuxing_analytics_config.endpoint`, open the popup, and grant analytics domain access.
+2. Open `Launch Config & Delivery Checks`, save the real analytics collector config, and grant analytics domain access.
 3. Confirm collector events arrive for:
    - `popup_open`
    - `first_open`
@@ -76,6 +88,7 @@ Before public launch, verify all of the following:
    - `share_save`
    - `share_copy`
    - `product_click`
+   - `analytics_probe`
 4. Save a share card and scan its QR code to ensure it opens the intended landing page.
 5. Trigger the daily notification once and confirm it opens the extension correctly.
 6. Replace this README's remaining template content with product-facing installation and usage docs.
