@@ -10,6 +10,7 @@ export interface LocaleMessages {
         desc: string;
     };
     form: {
+        dateLabel: string;
         year: string;
         month: string;
         day: string;

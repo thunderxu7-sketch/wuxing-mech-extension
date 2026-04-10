@@ -21,7 +21,11 @@ import {
     setDailyCache,
     getShareConfig,
 } from '../api/chromeStorage';
-import { hourToShichen, isValidCalendarDate } from '../utils/time';
+import {
+    formatCalendarDateInput,
+    hourToShichen,
+    parseCalendarDateInput,
+} from '../utils/time';
 import { RadarChart } from './components/RadarChart';
 import { generateShareImage } from './utils/generateShareImage';
 import { buildShareCaption, copyTextToClipboard, getDisplayShareUrl } from './utils/shareContent';
@@ -70,56 +74,51 @@ const BirthInputForm: React.FC<{
     m: LocaleMessages;
 }> = ({ onSubmit, currentInput, isLoading, m }) => {
     const [input, setInput] = useState({
-        year: currentInput.year.toString(),
-        month: currentInput.month.toString(),
-        day: currentInput.day.toString(),
+        date: formatCalendarDateInput(currentInput),
         hour: hourToShichen(currentInput.hour),
     });
 
     useEffect(() => {
         setInput({
-            year: currentInput.year.toString(),
-            month: currentInput.month.toString(),
-            day: currentInput.day.toString(),
+            date: formatCalendarDateInput(currentInput),
             hour: hourToShichen(currentInput.hour),
         });
     }, [currentInput]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setInput(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const year = parseInt(input.year, 10);
-        const month = parseInt(input.month, 10);
-        const day = parseInt(input.day, 10);
-        if (isNaN(year) || isNaN(month) || isNaN(day)) {
+
+        if (!input.date) {
             alert(m.form.validationError);
             return;
         }
-        if (!isValidCalendarDate(year, month, day)) {
+
+        const parsedDate = parseCalendarDateInput(input.date);
+
+        if (!parsedDate) {
             alert(m.form.invalidDateError);
             return;
         }
-        onSubmit({ year, month, day, hour: input.hour });
+
+        onSubmit({
+            ...parsedDate,
+            hour: input.hour,
+        });
     };
 
     return (
         <form onSubmit={handleSubmit} className="birth-form">
-            <div className="input-grid-3col">
-                <div className="input-field">
-                    <label>{m.form.year}</label>
-                    <input name="year" type="number" value={input.year} onChange={handleChange} min="1900" max="2100" required />
-                </div>
-                <div className="input-field">
-                    <label>{m.form.month}</label>
-                    <input name="month" type="number" value={input.month} onChange={handleChange} min="1" max="12" required />
-                </div>
-                <div className="input-field">
-                    <label>{m.form.day}</label>
-                    <input name="day" type="number" value={input.day} onChange={handleChange} min="1" max="31" required />
-                </div>
+            <div className="input-field">
+                <label htmlFor="birth-date">{m.form.dateLabel}</label>
+                <input
+                    id="birth-date"
+                    type="date"
+                    value={input.date}
+                    onChange={(e) => setInput(prev => ({ ...prev, date: e.target.value }))}
+                    min="1900-01-01"
+                    max="2100-12-31"
+                    required
+                />
             </div>
             <div className="shichen-field">
                 <label>{m.form.shichenLabel}</label>

@@ -10,6 +10,7 @@ export const en: LocaleMessages = {
         desc: 'Enter your birth time to receive your daily talisman',
     },
     form: {
+        dateLabel: 'Birth Date',
         year: 'Year',
         month: 'Month',
         day: 'Day',

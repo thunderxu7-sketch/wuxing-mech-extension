@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import type { FiveElementVector, FortuneResult } from '../src/utils/algorithm';
-import { calculateFortune, getDailyTalisman } from '../src/utils/algorithm';
+import {
+    calculateFortune,
+    calculateUserSignature,
+    getDailyTalisman,
+} from '../src/utils/algorithm';
 
 const balancedVector: FiveElementVector = {
     gold: 100,
@@ -42,6 +46,48 @@ test('calculateFortune keeps balanced energy at full score', () => {
     for (const value of Object.values(result.energyDifference)) {
         assert.equal(Number.isInteger(value), true);
         assert.equal(value, 95);
+    }
+});
+
+test('calculateUserSignature maps a known birth time into a stable element vector', () => {
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+        assert.deepEqual(
+            calculateUserSignature({ year: 1990, month: 1, day: 1, hour: 12 }),
+            {
+                gold: 0,
+                wood: 100,
+                water: 40,
+                fire: 200,
+                earth: 60,
+            },
+        );
+    } finally {
+        console.log = originalLog;
+    }
+});
+
+test('calculateUserSignature changes when the birth shichen changes', () => {
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+        const noonSignature = calculateUserSignature({ year: 1990, month: 1, day: 1, hour: 12 });
+        const eveningSignature = calculateUserSignature({ year: 1990, month: 1, day: 1, hour: 20 });
+
+        assert.notDeepEqual(noonSignature, eveningSignature);
+        assert.equal(
+            Object.values(noonSignature).reduce((sum, value) => sum + value, 0),
+            400,
+        );
+        assert.equal(
+            Object.values(eveningSignature).reduce((sum, value) => sum + value, 0),
+            400,
+        );
+    } finally {
+        console.log = originalLog;
     }
 });
 

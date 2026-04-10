@@ -10,6 +10,7 @@ export const zh: LocaleMessages = {
         desc: '输入出生时间，获取你的每日专属灵符',
     },
     form: {
+        dateLabel: '出生日期',
         year: '年',
         month: '月',
         day: '日',

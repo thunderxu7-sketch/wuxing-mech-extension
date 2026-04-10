@@ -521,21 +521,26 @@ h4 {
         text-align: center;
     }
 
-    input[type="number"] {
+    input[type="number"],
+    input[type="date"] {
         padding: 8px;
         border: 1px solid #ced4da;
         border-radius: 4px;
         font-size: 15px;
-        text-align: center;
         width: 100%;
         box-sizing: border-box;
         font-family: inherit;
+        background: $bg-card;
 
         &:focus {
             outline: none;
             border-color: $gold-accent;
             box-shadow: 0 0 0 2px rgba($gold-accent, 0.2);
         }
+    }
+
+    input[type="number"] {
+        text-align: center;
     }
 }
 
