@@ -1,12 +1,18 @@
 # 五行校准 Analytics Collector
 
-最小化的 Cloudflare Worker，接收扩展上报的事件并写入 D1。
+最小化的 Cloudflare Worker，接收扩展上报的事件并写入 D1，同时承担商品点击的中转归因。
+
+## 路由
+
+- `GET /health` — 存活探针
+- `POST /collect` — 接收 [`src/api/analytics.ts`](../src/api/analytics.ts) 的事件 envelope，写入 `events` 表
+- `GET /click` — 接收商品点击，写入 `clicks` 表后 302 跳转到目的 URL（仅允许白名单 host）
 
 ## 文件
 
-- `worker.ts` — Worker 入口，提供 `POST /collect` 与 `GET /health`
+- `worker.ts` — Worker 入口
 - `wrangler.jsonc` — Worker 配置，含 D1 binding
-- `schema.sql` — D1 表结构
+- `schema.sql` — D1 表结构（`events` + `clicks`）
 - `README.md` — 本文件
 
 事件 envelope 由 [`src/api/analytics.ts`](../src/api/analytics.ts) 产生：
@@ -22,6 +28,19 @@
   "properties": {}
 }
 ```
+
+商品点击 URL 由 [`src/utils/clickTracking.ts`](../src/utils/clickTracking.ts) 包装，形如：
+
+```
+https://wuxing-collector.<subdomain>.workers.dev/click
+  ?to=https%3A%2F%2Fs.taobao.com%2Fsearch%3Fq%3D...
+  &product=金属罗盘
+  &loc=zh
+  &site=wuxing-mech-extension
+  &iid=<installId>
+```
+
+Worker 会校验 `to` 的 host 是否在白名单（`taobao.com`、`tmall.com`、`jd.com`、`pinduoduo.com`、`amazon.{com,co.uk,de,co.jp}`），写入 `clicks` 表后 302 跳转，避免成为开放重定向。
 
 ## 一次性部署步骤
 
@@ -94,6 +113,29 @@ npx wrangler d1 execute wuxing-analytics --remote \
 
 把 `/collect` 完整 URL 提供给我，我会写进 `src/config/analytics.ts` 作为默认 endpoint，并把 `enabled` 默认改成 `true`。
 
+## 升级已部署的 collector
+
+如果你已经按照上面的步骤部署过 v1（只有 `events` 表 + `/collect` 路由），现在要拿到点击归因，需要：
+
+```sh
+# 应用最新 schema（新增 clicks 表 + 索引；已有的 events 表不会被破坏，CREATE TABLE IF NOT EXISTS）
+npx wrangler d1 execute wuxing-analytics --remote --file=schema.sql
+
+# 重新部署 worker（带上新的 /click 路由和白名单）
+npx wrangler deploy
+```
+
+部署完后做一次冒烟：
+
+```sh
+# 模拟一次点击（应该 302 到淘宝搜索页）
+curl -i "https://wuxing-collector.<your-subdomain>.workers.dev/click?to=https%3A%2F%2Fs.taobao.com%2Fsearch%3Fq%3Dtest&product=test&loc=zh&site=wuxing-mech-extension&iid=test-install"
+
+# 看 D1 是否落库
+npx wrangler d1 execute wuxing-analytics --remote \
+  --command "SELECT * FROM clicks ORDER BY id DESC LIMIT 5;"
+```
+
 ## 后续可以查的报表
 
 ```sh
@@ -108,6 +150,18 @@ npx wrangler d1 execute wuxing-analytics --remote --command \
 # 最近 7 天每日生成运势次数
 npx wrangler d1 execute wuxing-analytics --remote --command \
   "SELECT day, COUNT(*) AS n FROM events WHERE name = 'fortune_generated' AND day >= date('now','-7 day') GROUP BY day ORDER BY day;"
+
+# 点击 Top 10 商品
+npx wrangler d1 execute wuxing-analytics --remote --command \
+  "SELECT product, COUNT(*) AS n FROM clicks GROUP BY product ORDER BY n DESC LIMIT 10;"
+
+# 最近 7 天点击量按日聚合
+npx wrangler d1 execute wuxing-analytics --remote --command \
+  "SELECT date(received_at) AS day, COUNT(*) AS n FROM clicks WHERE received_at >= datetime('now','-7 day') GROUP BY day ORDER BY day;"
+
+# 点击转化漏斗：有过 popup_open 的 install_id 中，有多少触发过点击
+npx wrangler d1 execute wuxing-analytics --remote --command \
+  "SELECT COUNT(DISTINCT install_id) AS clicked_installs FROM clicks;"
 ```
 
 ## 注意事项

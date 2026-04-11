@@ -33,6 +33,7 @@ import {
     getAnalyticsConfig,
     getAnalyticsOriginPattern,
     getAnalyticsPermissionStatus,
+    getInstallId,
     getStats,
     retryQueuedAnalyticsEvents,
     requestAnalyticsEndpointPermission,
@@ -41,6 +42,7 @@ import {
     trackEvent,
     verifyAnalyticsCollector,
 } from '../api/analytics';
+import { wrapClickTracking } from '../utils/clickTracking';
 import type { Locale, LocaleMessages } from '../locales/types';
 import { getMessages } from '../locales';
 
@@ -160,6 +162,7 @@ export const Popup: React.FC = () => {
     const [detailExpanded, setDetailExpanded] = useState(false);
     const [showCeremony, setShowCeremony] = useState(false);
     const [shareConfig, setShareConfigState] = useState<ShareConfig | null>(null);
+    const [installId, setInstallId] = useState<string | null>(null);
     const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
     const [analyticsPermissionNeeded, setAnalyticsPermissionNeeded] = useState(false);
     const [analyticsPermissionGranted, setAnalyticsPermissionGranted] = useState(false);
@@ -430,15 +433,17 @@ export const Popup: React.FC = () => {
     useEffect(() => {
         async function loadData() {
             // 加载语言偏好
-            const [savedLocale, savedShareConfig, savedAnalyticsConfig] = await Promise.all([
+            const [savedLocale, savedShareConfig, savedAnalyticsConfig, savedInstallId] = await Promise.all([
                 chromeStorage.getLocale(),
                 getShareConfig(),
                 getAnalyticsConfig(),
+                getInstallId(),
             ]);
             setLocaleState(savedLocale);
             setM(getMessages(savedLocale));
             setShareConfigState(savedShareConfig);
             setAnalyticsDraft(savedAnalyticsConfig);
+            setInstallId(savedInstallId);
             await trackDAU({ locale: savedLocale });
             await refreshAnalyticsState();
 
@@ -755,7 +760,12 @@ export const Popup: React.FC = () => {
                         {physicalRecommendation.products.map((p, i) => (
                             <a
                                 key={i}
-                                href={p.buyLink}
+                                href={wrapClickTracking({
+                                    destination: p.buyLink,
+                                    productName: p.name,
+                                    locale,
+                                    installId,
+                                })}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="product-card"

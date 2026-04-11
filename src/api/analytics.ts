@@ -595,6 +595,12 @@ export async function retryQueuedAnalyticsEvents(): Promise<AnalyticsQueueRetryR
     };
 }
 
+/** Get the anonymous install id, creating one if it does not exist yet. */
+export async function getInstallId(now: Date = new Date()): Promise<string> {
+    const { meta } = await loadMeta(now);
+    return meta.installId;
+}
+
 /** Get current local analytics stats plus pending remote queue size. */
 export async function getStats(): Promise<AnalyticsStats> {
     const [stats, queue] = await Promise.all([loadStats(), loadQueue()]);
