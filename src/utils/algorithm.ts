@@ -461,7 +461,7 @@ const ELEMENT_DATA: Record<string, Record<Locale, ElementMeta>> = {
             themeColor: '白 / 红 (金克木，火泻木)',
             tarotAdvice: '关注『权杖』牌组的能量，将生发之力转化为具体行动。',
             products: [
-                { name: '白水晶簇摆件', keyword: '白水晶簇摆件', icon: '💎', label: '能量水晶' },
+                { name: '白水晶簇摆件', keyword: '白水晶簇摆件', icon: '💎', label: '能量水晶', affiliateUrl: 'https://s.click.taobao.com/t?e=m%3D2%26s%3Ds1eEyW2JhjJw4vFB6t2Z2ueEDrYVVa64g3vZOarmkFi53hKxp7mNFl906SyIHsHULo3%2FfOj61I%2F0JlhLk0Jl4ey2AZ63G4mrN35vXaadd1mQ68URGFfUUa8HCsYzB98w%2BJCbLummVt7WqunGLAygI3FzUC1tkZVLaUqWGQsEs4emcwlv9D%2BndQtkyqhBb5%2B4HoaaUnJGJVM9B4xXEGTfTRsr5Fp%2FZmEfi4kZGuoAcmNmtIz17NKiZ0w1wO%2BIxWMMoZWXy1UcAG6RPKnGQOC7okLEkqTedE399KEV1g6mN9C6fA%2BHrN%2BXZpB4w3NmBKRkxgxdTc00KD8%3D&union_lens=lensId%3APUB%401776088720%40212bc550_0e2c_19d8723237d_1c31%40021Qbvsi9AqwHBMuNncO4qXU%40eyJmbG9vcklkIjo4MDY3NCwiic3BtQiiI6Il9wb3J0YWxfdjJfcGFnZXNfcHJvbW9fZ29vZHNfaW5kZXhfaHRtIiiwiic3JjRmxvb3JJZCI6IjgwNjc0In0ie%3BtkScm%3Asearch_fuzzy_selectionPlaza_site_4358_0_0_0_6_177608872031810139353908%3Bscm%3A1007.30148.329090.pub_search-item_d02f6656-0ab0-4ad0-a7dc-da91dff36f95_' },
                 { name: '艺术画册', keyword: '艺术画册 精装', icon: '📚', label: '文艺' },
                 { name: '金属风铃', keyword: '金属风铃 日式', icon: '🔔', label: '家居' },
                 { name: '银饰手链', keyword: '纯银手链 简约', icon: '💍', label: '饰品' },
@@ -489,7 +489,7 @@ const ELEMENT_DATA: Record<string, Record<Locale, ElementMeta>> = {
             products: [
                 { name: '黄水晶摆件', keyword: '黄水晶摆件 招财', icon: '💎', label: '能量水晶' },
                 { name: '星座周边礼物', keyword: '星座礼物 摩羯座 金牛座', icon: '♑', label: '星座' },
-                { name: '虎眼石手链', keyword: '虎眼石手链', icon: '📿', label: '能量饰品' },
+                { name: '虎眼石手链', keyword: '虎眼石手链', icon: '📿', label: '能量饰品', affiliateUrl: 'https://s.click.taobao.com/t?e=m%3D2%26s%3DVo%2F9wqwxG8Nw4vFB6t2Z2ueEDrYVVa64YUrQeSeIhnK53hKxp7mNFl906SyIHsHUBcKmkkyArxL0JlhLk0Jl4ey2AZ63G4mrN35vXaadd1mQ68URGFfUUa8HCsYzB98w%2BJCbLummVt7WqunGLAygI3FzUC1tkZVLNeP%2FC0GK28OnCCH%2FMSFuGgtkyqhBb5%2B4HoaaUnJGJVMZKzyQwMx7KLFX0S0UkPDJ4KD%2Fp87vqdh1DcSooncqgvAZjMPuUUggKfZqRvUd%2BjbewPOkfKGa7kLEkqTedE399KEV1g6mN9Bh0O3Rc5H%2FprWCuPqUucK9WkceTTmbJx5NpORCvXz2yA%3D%3D&union_lens=lensId%3APUB%401776088755%40212bbff9_0d6c_19d8723aed3_8d24%40021WVN24QahyMYMFd7LrxSO4%40eyJmbG9vcklkIjo4MDY3NCwiic3BtQiiI6Il9wb3J0YWxfdjJfcGFnZXNfcHJvbW9fZ29vZHNfaW5kZXhfaHRtIiiwiic3JjRmxvb3JJZCI6IjgwNjc0In0ie%3BtkScm%3Asearch_fuzzy_selectionPlaza_site_4358_0_0_0_3_177608875599110139353908%3Bscm%3A1007.30148.329090.pub_search-item_ce9bb3d9-43a8-4c4f-87b3-1789ee29d2f1_' },
                 { name: '沉香手串', keyword: '沉香手串 天然', icon: '📿', label: '养生' },
                 { name: '黄铜摆件', keyword: '黄铜摆件 招财', icon: '🪙', label: '风水' },
                 { name: '普洱茶饼', keyword: '普洱茶饼 礼盒', icon: '🍵', label: '茶道' },
@@ -513,7 +513,7 @@ const ELEMENT_DATA: Record<string, Record<Locale, ElementMeta>> = {
             themeColor: '蓝 / 绿 (水克火，木生火)',
             tarotAdvice: '多加解读『圣杯』牌组，关注内心感受与情感交流，而非外部冲突。',
             products: [
-                { name: '青金石吊坠', keyword: '青金石吊坠', icon: '💎', label: '能量水晶' },
+                { name: '青金石吊坠', keyword: '青金石吊坠', icon: '💎', label: '能量水晶', affiliateUrl: 'https://uland.taobao.com/coupon/edetail?e=mb%2BJ1ng3tSOlhHvvyUNXZfh8CuWt5YH5OVuOuRD5gLJMmdsrkidbOWgpcJRl3wFwcV%2FlEyhmp8CWU9RPXcxvepfLxegMTFJyxLVFgHS8vo%2FXGh%2Bz8cMOs82QGjc6Db7yQzZ58q191a2y%2BpqXENrZF9gBE4XW2EqXaXOtHj5%2BtxsvR%2F1BNLrRCcLRW2d0xlmJICz0STAcMtvEudKYq6n0fVt110l29%2FNdDfqEFBOhTcyCc3iszFwSkv7UZVdseYvYWldT%2FS2kBovdVPE4Rni4JvRXnoqz1jAuSZmS8eGtb0NsB2SFUmuBXSWmYvz4KVM8saMWz%2BfStXaaFfofOlW8jvpvTxnSf5WlYpCeA5BjP6eie%2FpBy9wBFg%3D%3D&traceId=2150438e17760889259415806e13dd&union_lens=lensId%3APUB%401776088901%4021673672_0e3d_19d8725e6f3_0632%40024JFbGsr9TBfHhYxNMqMnec%40eyJmbG9vcklkIjo4MDY3NCwiic3BtQiiI6Il9wb3J0YWxfdjJfcGFnZXNfcHJvbW9fZ29vZHNfaW5kZXhfaHRtIiiwiic3JjRmxvb3JJZCI6IjgwNjc0In0ie%3BtkScm%3AselectionPlaza_site_4358_0_0_0_1_177608890142510139353908%3Bscm%3A1007.30148.329090.pub_search-item_3206e19a-444d-4057-be3e-31d578ed81d5_' },
                 { name: '蓝色陶瓷茶具', keyword: '蓝色陶瓷茶具套装', icon: '🍵', label: '茶道' },
                 { name: '海蓝宝手链', keyword: '海蓝宝手链', icon: '📿', label: '能量饰品' },
                 { name: '薰衣草精油', keyword: '薰衣草精油 天然', icon: '💧', label: '舒缓' },
@@ -541,7 +541,7 @@ const ELEMENT_DATA: Record<string, Record<Locale, ElementMeta>> = {
             products: [
                 { name: '孔雀石手链', keyword: '孔雀石手链', icon: '💎', label: '能量水晶' },
                 { name: '室内绿植盆栽', keyword: '室内盆栽 绿植 桌面', icon: '🌿', label: '绿植' },
-                { name: '绿幽灵水晶', keyword: '绿幽灵水晶 手链', icon: '📿', label: '能量饰品' },
+                { name: '绿幽灵水晶', keyword: '绿幽灵水晶 手链', icon: '📿', label: '能量饰品', affiliateUrl: 'https://s.click.taobao.com/t?e=m%3D2%26s%3DGqWb6EzwGjpw4vFB6t2Z2ueEDrYVVa64YUrQeSeIhnK53hKxp7mNFl906SyIHsHUThs4KPa5anb0JlhLk0Jl4ey2AZ63G4mrN35vXaadd1mQ68URGFfUUa8HCsYzB98w%2BJCbLummVt7WqunGLAygI3FzUC1tkZVLtVFM%2BuyufadUtRoEzcIPVwtkyqhBb5%2B4HoaaUnJGJVONvdEmtnfnqGtZO2BV4ZqCW5DAmeSsWCuyxWC04Bz2%2B0hdfEOIyP8K2ytokgZbWCDjgeUD4holsk%2FuprW1TdmBLeMqtJBmsqDZGL0GbiMMd%2BWTbdK%2BKJxRXcsjipofTJ29Gf2zmUiveQ%3D%3D&union_lens=lensId%3APUB%401776088957%402135c191_0e27_19d8726c3da_278f%40021eOk1LeOz3cvDdT7CN4fZQ%40eyJmbG9vcklkIjo4MDY3NCwiic3BtQiiI6Il9wb3J0YWxfdjJfcGFnZXNfcHJvbW9fZ29vZHNfaW5kZXhfaHRtIiiwiic3JjRmxvb3JJZCI6IjgwNjc0In0ie%3BtkScm%3Asearch_fuzzy_selectionPlaza_site_4358_0_0_0_14_177608895799110139353908%3Bscm%3A1007.30148.329090.pub_search-item_3f69a897-d577-42c5-b709-11529fdb99a2_' },
                 { name: '抹茶礼盒', keyword: '抹茶礼盒 日式', icon: '🍵', label: '茶道' },
                 { name: '竹制香插', keyword: '竹制香插 线香座', icon: '🎋', label: '香道' },
                 { name: '翡翠平安扣', keyword: '翡翠平安扣 吊坠', icon: '🧿', label: '平安' },
@@ -567,7 +567,7 @@ const ELEMENT_DATA: Record<string, Record<Locale, ElementMeta>> = {
             products: [
                 { name: '白水晶柱', keyword: '白水晶柱 天然', icon: '💎', label: '能量水晶' },
                 { name: '护肤套装礼盒', keyword: '护肤套装 礼盒', icon: '🧴', label: '护肤' },
-                { name: '紫水晶洞', keyword: '紫水晶洞 摆件', icon: '💎', label: '摆件' },
+                { name: '紫水晶洞', keyword: '紫水晶洞 摆件', icon: '💎', label: '摆件', affiliateUrl: 'https://uland.taobao.com/coupon/edetail?e=zoMc%2BWQ8aJilhHvvyUNXZfh8CuWt5YH5OVuOuRD5gLJMmdsrkidbOWgpcJRl3wFwcV%2FlEyhmp8B0cib5ugqsds0PWlZ8FPmFLThWU2sJBD1hn3Pu9MzHfXaL0TuUDZn2WlyYOqyu80U%2BQqs%2BOqWgVLhtWWjRAlP0YwOD23XOnRG3iabtJWruNyNnbrD79T7fTofvsbfU3zwhIMdCebK0eo81Nvpq24IImMHpNfYdHdAXFKGQBYiUE%2FFFzUHogwwlvbHJ%2Fki%2BjXBsnl3aBE22Yc1hxAla%2BjOlUkI0Iq%2BeTZmH%2BWWEbFCBmH3kgStyl2tPkOomLOc2xKFCf93k%2B%2Fb8Cm4XEKR%2BT0n3tVj9fvtxMzRVbrKqp4Yn8g%3D%3D&traceId=2150438e17760891213328156e13dd&union_lens=lensId%3APUB%401776089059%40212bcd02_0e16_19d87285278_d73d%4002CpWjiTZqM12T6RO0FOUsB%40eyJmbG9vcklkIjo4MDY3NCwiic3BtQiiI6Il9wb3J0YWxfdjJfcGFnZXNfcHJvbW9fZ29vZHNfaW5kZXhfaHRtIiiwiic3JjRmxvb3JJZCI6IjgwNjc0In0ie%3BtkScm%3AselectionPlaza_site_4358_0_0_0_10_177608906002410139353908%3Bscm%3A1007.30148.329090.pub_search-item_c00b1c96-9463-416d-bb8f-55d327e3c10a_' },
                 { name: '手工皂礼盒', keyword: '手工皂 天然 礼盒', icon: '🧼', label: '洗护' },
                 { name: '龙泉青瓷杯', keyword: '龙泉青瓷杯', icon: '🍵', label: '茶道' },
                 { name: '天然蜂蜡蜡烛', keyword: '天然蜂蜡蜡烛', icon: '🕯️', label: '香薰' },
