@@ -421,7 +421,7 @@ function generateAffiliateLink(keyword: string, locale: Locale): string {
 
 // --- 商品池 + 塔罗多语言数据 ---
 
-interface RawProduct { name: string; keyword: string; icon: string; label: string; }
+interface RawProduct { name: string; keyword: string; icon: string; label: string; affiliateUrl?: string; }
 
 interface ElementMeta {
     themeColor: string;
@@ -435,7 +435,7 @@ const ELEMENT_DATA: Record<string, Record<Locale, ElementMeta>> = {
             themeColor: '红 / 黑 (火克金，水泻金)',
             tarotAdvice: '审视你的『宝剑』牌组，寻找行动与克制之间的平衡。',
             products: [
-                { name: '黑曜石手链', keyword: '黑曜石手链', icon: '💎', label: '能量水晶' },
+                { name: '黑曜石手链', keyword: '黑曜石手链', icon: '💎', label: '能量水晶', affiliateUrl: 'https://s.click.taobao.com/t?e=m%3D2%26s%3Dkhl0EL78ikNw4vFB6t2Z2ueEDrYVVa64YUrQeSeIhnK53hKxp7mNFl906SyIHsHUhDqz0N12Bmb0JlhLk0Jl4ey2AZ63G4mrN35vXaadd1mQ68URGFfUUa8HCsYzB98w%2BJCbLummVt7WqunGLAygI3FzUC1tkZVLDcsC9G%2BQCBI6fjAYKIHmwM0Q9fK1X0Au0ItOGVs%2B65ktv3cN%2Fx87OGZEBHtTGfZkwHpF%2FzUhH7fJfnh3wcUCBd0CPrQx4uTttTCYOc400ws0GeHdPmI2q4wmLWBgEm80VKxcI130SjE62eTPdbXr0pviRzN6McS7IUTRFVyU79zGJe8N%2FwNpGw%3D%3D&union_lens=lensId%3APUB%401776084884%40212be337_0f1d_19d86e89bb3_7d13%40023f16uR4iNYJcoTtaVp9DoZ%40eyJmbG9vcklkIjo4MDY3NCwiic3BtQiiI6Il9wb3J0YWxfdjJfcGFnZXNfcHJvbW9fZ29vZHNfaW5kZXhfaHRtIiiwiic3JjRmxvb3JJZCI6IjgwNjc0In0ie%3BtkScm%3Asearch_fuzzy_selectionPlaza_site_4358_0_0_0_2_177608488446910139353908%3Bscm%3A1007.30148.329090.pub_search-item_b44ceeb0-2a24-46bb-b975-8a4609b96d6f_' },
                 { name: '红色香薰蜡烛', keyword: '红色香薰蜡烛', icon: '🕯️', label: '香薰' },
                 { name: '红玛瑙手串', keyword: '红玛瑙手串 开运', icon: '📿', label: '开运饰品' },
                 { name: '檀香线香', keyword: '檀香线香 天然', icon: '🪔', label: '空间净化' },
@@ -612,7 +612,7 @@ export function getPhysicalAnchorRecommendation(
         tarotAdvice: data.tarotAdvice,
         products: selected.map(p => ({
             name: p.name,
-            buyLink: generateAffiliateLink(p.keyword, locale),
+            buyLink: p.affiliateUrl || generateAffiliateLink(p.keyword, locale),
             icon: p.icon,
             label: p.label,
         })),
