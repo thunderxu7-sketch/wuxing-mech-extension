@@ -785,7 +785,7 @@ export const Popup: React.FC = () => {
                 </div>
             )}
 
-            {analyticsPermissionNeeded && (
+            {import.meta.env.DEV && analyticsPermissionNeeded && (
                 <div className="launch-card">
                     <h4>{m.launch.analyticsPermissionTitle}</h4>
                     <p>{m.launch.analyticsPermissionDesc}</p>
@@ -799,7 +799,7 @@ export const Popup: React.FC = () => {
                 </div>
             )}
 
-            {!analyticsPermissionNeeded && analyticsPermissionGranted && (
+            {import.meta.env.DEV && !analyticsPermissionNeeded && analyticsPermissionGranted && (
                 <div className="launch-card launch-card--ok">
                     <p>{m.launch.analyticsPermissionGranted}</p>
                 </div>
