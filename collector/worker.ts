@@ -111,7 +111,16 @@ async function handleClick(request: Request, env: Env, url: URL): Promise<Respon
         return json({ error: 'method_not_allowed' }, 405);
     }
 
-    const to = url.searchParams.get('to') ?? '';
+    const toRaw = url.searchParams.get('to') ?? '';
+    // The affiliate URLs are already percent-encoded, and URLSearchParams on
+    // the client side encodes them again.  Decode once so the redirect target
+    // is a clean URL that the destination platform can understand.
+    let to: string;
+    try {
+        to = decodeURIComponent(toRaw);
+    } catch {
+        to = toRaw;
+    }
     const product = url.searchParams.get('product') ?? 'unknown';
     const installId = url.searchParams.get('iid') ?? 'anonymous';
     const site = url.searchParams.get('site') ?? 'wuxing-mech-extension';
