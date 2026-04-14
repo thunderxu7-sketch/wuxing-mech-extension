@@ -541,7 +541,7 @@ export const Popup: React.FC = () => {
     );
 
     const analyticsOrigin = getAnalyticsOriginPattern(analyticsDraft.endpoint);
-    const AnalyticsSettings = (
+    const AnalyticsSettings = import.meta.env.DEV ? (
         <details className="launch-settings">
             <summary>{m.launch.settingsSummary}</summary>
             <div className="launch-settings-body">
@@ -617,7 +617,7 @@ export const Popup: React.FC = () => {
                 </div>
             </div>
         </details>
-    );
+    ) : null;
 
     // 校准仪式动画
     if (showCeremony) {
