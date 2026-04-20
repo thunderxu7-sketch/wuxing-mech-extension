@@ -59,6 +59,7 @@ export const en: LocaleMessages = {
     products: {
         title: 'Recommended Items',
         refresh: 'Refresh',
+        affiliateDisclosure: 'Product links are affiliate links. We may earn a small commission at no extra cost to you.',
     },
     share: {
         saveBtn: 'Save Talisman Card',

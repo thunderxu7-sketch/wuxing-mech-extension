@@ -782,6 +782,7 @@ export const Popup: React.FC = () => {
                             </a>
                         ))}
                     </div>
+                    <p className="affiliate-disclosure">{m.products.affiliateDisclosure}</p>
                 </div>
             )}
 

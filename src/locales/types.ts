@@ -40,6 +40,7 @@ export interface LocaleMessages {
     products: {
         title: string;
         refresh: string;
+        affiliateDisclosure: string;
     };
     share: {
         saveBtn: string;

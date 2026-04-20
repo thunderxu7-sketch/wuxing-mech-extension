@@ -59,6 +59,7 @@ export const zh: LocaleMessages = {
     products: {
         title: '推荐好物',
         refresh: '换一批',
+        affiliateDisclosure: '商品链接为推广链接，您的购买可能为我们带来少量佣金，不影响您的购买价格。',
     },
     share: {
         saveBtn: '保存今日灵符卡片',
