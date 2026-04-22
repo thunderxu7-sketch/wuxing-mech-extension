@@ -26,7 +26,8 @@ export type AnalyticsEventName =
     | 'product_click'
     | 'share_save'
     | 'share_copy'
-    | 'locale_switch';
+    | 'locale_switch'
+    | 'tarot_draw';
 
 type AnalyticsPropertyValue = string | number | boolean | null;
 

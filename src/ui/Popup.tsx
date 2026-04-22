@@ -27,6 +27,9 @@ import {
     parseCalendarDateInput,
 } from '../utils/time';
 import { RadarChart } from './components/RadarChart';
+import TarotCard from './components/TarotCard';
+import { drawDailyTarot, type DailyTarotResult } from '../utils/tarot';
+import { getDailyTarotCache, setDailyTarotCache } from '../api/chromeStorage';
 import { generateShareImage } from './utils/generateShareImage';
 import { buildShareCaption, copyTextToClipboard, getDisplayShareUrl } from './utils/shareContent';
 import {
@@ -174,6 +177,8 @@ export const Popup: React.FC = () => {
     const [analyticsQueueCount, setAnalyticsQueueCount] = useState(0);
     const [analyticsFeedback, setAnalyticsFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
     const [analyticsBusy, setAnalyticsBusy] = useState(false);
+    const [tarotResult, setTarotResult] = useState<DailyTarotResult | null>(null);
+    const [tarotDrawn, setTarotDrawn] = useState(false);
     const hasTrackedOnboardingView = useRef(false);
     const copyFeedbackTimerRef = useRef<number | null>(null);
 
@@ -210,11 +215,28 @@ export const Popup: React.FC = () => {
         }
     }, [fortuneResult, locale]);
 
+    /** 塔罗抽牌 */
+    const handleTarotDraw = useCallback(async () => {
+        if (!userSignature || !fortuneResult) return;
+        const result = drawDailyTarot(userSignature, fortuneResult);
+        setTarotResult(result);
+        setTarotDrawn(true);
+        await setDailyTarotCache(userSignature, result);
+        void trackEvent('tarot_draw', {
+            locale,
+            card_id: result.card.id,
+            card_suit: result.card.suit,
+            position: result.position,
+            resonance: result.wuxingResonance,
+        });
+    }, [userSignature, fortuneResult, locale]);
+
     /** 统一应用运势结果 */
-    const applyFortuneResult = useCallback((
+    const applyFortuneResult = useCallback(async (
         result: FortuneResult,
         loc: Locale,
         source: 'cache' | 'fresh',
+        signature: UserSignature,
     ) => {
         setFortuneResult(result);
         const nextTalisman = getDailyTalisman(result, loc);
@@ -227,13 +249,20 @@ export const Popup: React.FC = () => {
             talisman_id: nextTalisman.id,
             source,
         });
+
+        // Load cached tarot draw if exists
+        const tarotCache = await getDailyTarotCache(signature);
+        if (tarotCache) {
+            setTarotResult(tarotCache.data);
+            setTarotDrawn(true);
+        }
     }, []);
 
     /** 计算或从缓存加载今日运势 */
     const calculateAndSetFortune = useCallback(async (signature: UserSignature, loc: Locale) => {
         const cachedResult = await getDailyCache(signature);
         if (cachedResult) {
-            applyFortuneResult(cachedResult.data, loc, 'cache');
+            void applyFortuneResult(cachedResult.data, loc, 'cache', signature);
             return;
         }
 
@@ -241,7 +270,7 @@ export const Popup: React.FC = () => {
         const V_Day = calculateDailyCosmos(today);
         const result = calculateFortune(signature, V_Day);
         await setDailyCache(signature, result);
-        applyFortuneResult(result, loc, 'fresh');
+        void applyFortuneResult(result, loc, 'fresh', signature);
     }, [applyFortuneResult]);
 
     const refreshAnalyticsState = useCallback(async (syncDraft = false) => {
@@ -505,6 +534,8 @@ export const Popup: React.FC = () => {
             score: fortuneResult.score,
             shareUrl: shareConfig.shareUrl,
             shortUrl: shareConfig.shortUrl,
+            tarotName: tarotResult?.card.name[locale],
+            tarotPosition: tarotResult ? (tarotResult.position === 'upright' ? m.tarot.uprightLabel : m.tarot.reversedLabel) : undefined,
         });
 
         try {
@@ -702,6 +733,17 @@ export const Popup: React.FC = () => {
                 </div>
             )}
 
+            {/* ====== 每日塔罗 ====== */}
+            {fortuneResult && (
+                <TarotCard
+                    result={tarotResult}
+                    onDraw={handleTarotDraw}
+                    hasDrawn={tarotDrawn}
+                    locale={locale}
+                    m={m}
+                />
+            )}
+
             {/* ====== 折叠：详细分析 ====== */}
             {fortuneResult && (
                 <div className="detail-section">
@@ -829,6 +871,13 @@ export const Popup: React.FC = () => {
                                     locale,
                                     shareUrl: shareConfig.shareUrl,
                                     shortUrl: shareConfig.shortUrl,
+                                    tarot: tarotResult ? {
+                                        name: tarotResult.card.name[locale],
+                                        symbol: tarotResult.card.symbol,
+                                        position: tarotResult.position,
+                                        positionLabel: tarotResult.position === 'upright' ? m.tarot.uprightLabel : m.tarot.reversedLabel,
+                                        reading: tarotResult.enhancedReading[locale],
+                                    } : undefined,
                                 });
                                 await trackEvent('share_save', {
                                     locale,

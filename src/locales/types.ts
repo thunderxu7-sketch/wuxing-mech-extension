@@ -42,6 +42,19 @@ export interface LocaleMessages {
         refresh: string;
         affiliateDisclosure: string;
     };
+    tarot: {
+        sectionTitle: string;
+        drawButton: string;
+        uprightLabel: string;
+        reversedLabel: string;
+        harmonyLabel: string;
+        tensionLabel: string;
+        neutralLabel: string;
+        readingTitle: string;
+        alreadyDrawn: string;
+        majorArcana: string;
+        minorArcana: string;
+    };
     share: {
         saveBtn: string;
         copyBtn: string;

@@ -9,6 +9,8 @@ interface ShareCaptionParams {
     score: number;
     shareUrl: string;
     shortUrl: string;
+    tarotName?: string;
+    tarotPosition?: string;
 }
 
 export function getDisplayShareUrl(shortUrl: string, shareUrl: string): string {
@@ -17,12 +19,15 @@ export function getDisplayShareUrl(shortUrl: string, shareUrl: string): string {
 
 export function buildShareCaption(params: ShareCaptionParams): string {
     const displayLink = getDisplayShareUrl(params.shortUrl, params.shareUrl);
+    const tarotPart = params.tarotName
+        ? ` | ${params.locale === 'zh' ? '塔罗' : 'Tarot'}：${params.tarotName}(${params.tarotPosition})`
+        : '';
 
     if (params.locale === 'zh') {
-        return `今日五行校准：${params.score}分 | 灵符：${params.talismanName} | ${params.subtitle}\n查看今日灵符：${displayLink}`;
+        return `今日五行校准：${params.score}分 | 灵符：${params.talismanName}${tarotPart} | ${params.subtitle}\n查看今日灵符：${displayLink}`;
     }
 
-    return `Today's WuXing score: ${params.score}/100 | Talisman: ${params.talismanName} | ${params.subtitle}\nView today's talisman: ${displayLink}`;
+    return `Today's WuXing score: ${params.score}/100 | Talisman: ${params.talismanName}${tarotPart} | ${params.subtitle}\nView today's talisman: ${displayLink}`;
 }
 
 export async function createShareQrDataUrl(url: string): Promise<string> {

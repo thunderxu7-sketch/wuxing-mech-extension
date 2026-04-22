@@ -304,6 +304,187 @@ h4 {
 }
 
 // ----------------------------------------------------
+// 每日塔罗
+// ----------------------------------------------------
+.tarot-section {
+    margin-top: 4px;
+
+    .section-title {
+        text-align: center;
+        margin: 0 0 12px;
+    }
+}
+
+.tarot-card-container {
+    perspective: 800px;
+
+    &.flipping .tarot-card {
+        animation: tarotFlip 0.6s ease-in-out;
+    }
+}
+
+.tarot-card {
+    border: 2px solid $gold-accent;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.tarot-card-back {
+    height: 200px;
+    background: linear-gradient(135deg, #1a1233, #2a1f44);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 8px;
+        border: 1px solid rgba($gold-accent, 0.4);
+        border-radius: 6px;
+    }
+
+    .tarot-back-pattern {
+        animation: tarotShimmer 2s ease-in-out infinite;
+    }
+
+    .tarot-back-symbol {
+        font-size: 48px;
+        color: $gold-accent;
+        opacity: 0.8;
+    }
+}
+
+.tarot-card-face {
+    cursor: default;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.tarot-card-image {
+    background: linear-gradient(135deg, #f5efe3, $bg-body);
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+
+    img {
+        width: 140px;
+        height: 210px;
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+        &.reversed {
+            transform: rotate(180deg);
+        }
+    }
+}
+
+.tarot-card-info {
+    padding: 12px 16px 16px;
+    text-align: center;
+}
+
+.tarot-suit {
+    font-size: 11px;
+    color: $text-secondary;
+    letter-spacing: 1px;
+}
+
+.tarot-name {
+    font-size: 18px;
+    color: $gold-accent;
+    margin: 4px 0 8px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.tarot-badges {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.tarot-position-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+
+    &.upright {
+        background: rgba(#28a745, 0.12);
+        color: #28a745;
+    }
+
+    &.reversed {
+        background: rgba(#e67e22, 0.12);
+        color: #e67e22;
+    }
+}
+
+.tarot-resonance-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+
+    &.harmony {
+        background: rgba($purple-accent, 0.1);
+        color: $purple-accent;
+    }
+
+    &.tension {
+        background: rgba(#dc3545, 0.1);
+        color: #dc3545;
+    }
+
+    &.neutral {
+        background: rgba($text-secondary, 0.1);
+        color: $text-secondary;
+    }
+}
+
+.tarot-reading {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #4a4a4a;
+    margin: 0;
+    font-style: italic;
+}
+
+.tarot-draw-btn {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    background: $gold-accent;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    letter-spacing: 1px;
+
+    &:hover {
+        background: $gold-accent-dark;
+    }
+}
+
+@keyframes tarotFlip {
+    0% { transform: rotateY(0deg); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(0deg); }
+}
+
+@keyframes tarotShimmer {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+// ----------------------------------------------------
 // 折叠详细分析
 // ----------------------------------------------------
 .detail-section {

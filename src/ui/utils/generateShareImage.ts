@@ -1,7 +1,16 @@
 import html2canvas from 'html2canvas';
 import type { TalismanRecommendation } from '../../utils/algorithm';
+import type { TarotPosition } from '../../data/tarotDeck';
 import type { Locale } from '../../locales/types';
 import { createShareQrDataUrl, getDisplayShareUrl } from './shareContent';
+
+interface TarotShareInfo {
+    name: string;
+    symbol: string;
+    position: TarotPosition;
+    positionLabel: string;
+    reading: string;
+}
 
 interface ShareCardParams {
     talisman: TalismanRecommendation;
@@ -11,6 +20,7 @@ interface ShareCardParams {
     locale: Locale;
     shareUrl: string;
     shortUrl: string;
+    tarot?: TarotShareInfo;
 }
 
 const TITLES: Record<Locale, string> = {
@@ -32,7 +42,7 @@ function formatDate(locale: Locale): string {
 }
 
 export async function generateShareImage(params: ShareCardParams): Promise<void> {
-    const { talisman, score, tarotAdvice, talismanImageSrc, locale, shareUrl, shortUrl } = params;
+    const { talisman, score, tarotAdvice, talismanImageSrc, locale, shareUrl, shortUrl, tarot } = params;
 
     const dateStr = formatDate(locale);
     const title = TITLES[locale];
@@ -85,7 +95,22 @@ export async function generateShareImage(params: ShareCardParams): Promise<void>
             border-radius: 0 4px 4px 0;
             width: 280px;
             box-sizing: border-box;
-        ">"${tarotAdvice}"</div>
+        ">"${tarotAdvice}"</div>${tarot ? `
+        <div style="
+            margin-top: 12px;
+            padding: 10px 16px;
+            border: 1px solid #e0dcd0;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.6);
+            width: 280px;
+            box-sizing: border-box;
+            text-align: center;
+        ">
+            <div style="font-size: 24px; margin-bottom: 4px;">${tarot.symbol}</div>
+            <div style="font-size: 14px; color: #b8860b; font-weight: bold; letter-spacing: 2px;">${tarot.name}</div>
+            <div style="font-size: 11px; color: ${tarot.position === 'upright' ? '#28a745' : '#e67e22'}; margin-top: 2px;">${tarot.positionLabel}</div>
+            <div style="font-size: 11px; color: #4a4a4a; font-style: italic; margin-top: 6px; line-height: 1.6;">${tarot.reading}</div>
+        </div>` : ''}
         <div style="
             width: 100%;
             margin-top: 18px;

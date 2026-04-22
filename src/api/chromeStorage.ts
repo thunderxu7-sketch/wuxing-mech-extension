@@ -1,10 +1,12 @@
 // src/api/chromeStorage.ts
 import type { UserSignature, UserSignatureInput, FortuneResult } from '../utils/algorithm';
+import type { DailyTarotResult } from '../utils/tarot';
 import type { Locale } from '../locales/types';
 import { DEFAULT_SHARE_URL, DEFAULT_SHORT_URL } from '../config/share';
 
 const USER_SIGNATURE_KEY = 'user_signature';
 const DAILY_CACHE_KEY = 'daily_fortune_cache';
+const TAROT_CACHE_KEY = 'daily_tarot_cache';
 const USER_INPUT_KEY = 'user_input_birth';
 const LOCALE_KEY = 'user_locale';
 const SHARE_CONFIG_KEY = 'wuxing_share_config';
@@ -18,6 +20,12 @@ interface DailyFortuneCache {
     date: string;
     signatureKey: string;
     data: FortuneResult;
+}
+
+interface DailyTarotCache {
+    date: string;
+    signatureKey: string;
+    data: DailyTarotResult;
 }
 
 function hasExtensionStorage(): boolean {
@@ -199,4 +207,41 @@ export async function getShareConfig(): Promise<ShareConfig> {
         shareUrl: storedConfig?.shareUrl || defaults.shareUrl,
         shortUrl: storedConfig?.shortUrl || storedConfig?.shareUrl || defaults.shortUrl,
     };
+}
+
+/**
+ * 获取当日塔罗牌缓存。
+ */
+export async function getDailyTarotCache(signature: UserSignature, now: Date = new Date()): Promise<DailyTarotCache | null> {
+    if (!hasExtensionStorage()) {
+        return null;
+    }
+    const result = await chrome.storage.local.get(TAROT_CACHE_KEY);
+    const cache = result[TAROT_CACHE_KEY] as DailyTarotCache | undefined;
+
+    if (!cache) return null;
+
+    const todayString = getTodayCacheDate(now);
+    const signatureKey = getSignatureCacheKey(signature);
+
+    if (cache.date !== todayString || cache.signatureKey !== signatureKey) {
+        return null;
+    }
+
+    return cache;
+}
+
+/**
+ * 设置当日塔罗牌缓存。
+ */
+export async function setDailyTarotCache(signature: UserSignature, data: DailyTarotResult, now: Date = new Date()): Promise<void> {
+    if (!hasExtensionStorage()) {
+        return;
+    }
+    const cache: DailyTarotCache = {
+        date: getTodayCacheDate(now),
+        signatureKey: getSignatureCacheKey(signature),
+        data,
+    };
+    await chrome.storage.local.set({ [TAROT_CACHE_KEY]: cache });
 }
